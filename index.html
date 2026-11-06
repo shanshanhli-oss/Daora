@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#171014" />
+    <meta name="description" content="DAORA · 我的迷你道场。一方属于你的数字静境，在光影、五行与呼吸之间，回到自己。" />
+    <title>DAORA · 我的迷你道场</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23271920'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23c7a76b' stroke-width='2'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='27' fill='%23d9c399'%3E道%3C/text%3E%3C/svg%3E" />
+    <script type="module" crossorigin src="./assets/index-BxnaISJ4.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/three-F3olvnTL.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-C7MdWrQk.css">
+  </head>
+  <body>
+    <div id="app">
+      <div id="scene" aria-label="可交互的 DAORA 三维房间"></div>
+      <div class="scene-shade" aria-hidden="true"></div>
+      <div id="loading" class="loading-screen">
+        <div class="brand-seal">道</div>
+        <span class="eyebrow">DAORA</span>
+        <div class="loading-line"><span></span></div>
+        <p>正在布置你的静境</p>
+      </div>
+
+      <section id="landing" class="landing hidden" aria-labelledby="landing-title">
+        <header class="landing-header">
+          <a class="brand" href="#" aria-label="DAORA home">
+            <span class="brand-seal small">道</span>
+            <span><b>DAORA</b><small>我的迷你道场</small></span>
+          </a>
+          <div class="landing-header-right">
+            <span class="quiet-label"><span class="status-dot"></span><span data-i18n="digitalSanctuary">A DIGITAL SANCTUARY</span></span>
+            <button class="language-button" data-action="language" aria-label="Switch language">EN <span>/</span> 中文</button>
+          </div>
+        </header>
+        <div class="landing-layout">
+          <div class="hero-copy">
+            <div class="eyebrow hero-eyebrow"><span></span><span data-i18n="spaceToReturn">A SPACE TO RETURN TO YOURSELF</span></div>
+            <h1 id="landing-title" data-i18n-html="heroTitle">回到内心，<br><em>安住于此。</em></h1>
+            <p class="hero-subtitle" data-i18n="heroSubtitle">在喧嚣之外，为自己留一方天地。<br>以五行为引，让每一次觉察，都成为空间的生长。</p>
+            <div class="hero-features">
+              <div><span class="feature-mark">01</span><p><b data-i18n="featureOne">看见你的内在节律</b><small data-i18n="featureOneSub">生辰 · 五行 · 能量</small></p></div>
+              <div><span class="feature-mark">02</span><p><b data-i18n="featureTwo">住进会生长的空间</b><small data-i18n="featureTwoSub">每一次记录，都留下痕迹</small></p></div>
+              <div><span class="feature-mark">03</span><p><b data-i18n="featureThree">把片刻留给自己</b><small data-i18n="featureThreeSub">呼吸 · 冥想 · 日常仪式</small></p></div>
+            </div>
+            <div class="orbit-signature" aria-hidden="true">
+              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="51" /><circle cx="60" cy="60" r="43" /><path d="M60 17v8m0 70v8M17 60h8m70 0h8M30 30l6 6m48 48 6 6M30 90l6-6m48-48 6-6" /><path class="yin" d="M60 37a23 23 0 1 0 0 46 11.5 11.5 0 1 0 0-23 11.5 11.5 0 1 1 0-23Z"/><circle cx="60" cy="48.5" r="3"/><circle class="yin-dot" cx="60" cy="71.5" r="3"/></svg>
+              <span>一方静境 · 归于自己<br><i>YOUR SPACE. YOUR RHYTHM.</i></span>
+            </div>
+          </div>
+
+          <form id="birth-form" class="entry-card">
+            <div class="card-topline"><span data-i18n="beginJourney">BEGIN YOUR JOURNEY</span><span>✦</span></div>
+            <h2 data-i18n="createSpace">创造你的专属静境</h2>
+            <p class="entry-intro" data-i18n="entryIntro">从你的生辰开始，探索此刻的五行能量。</p>
+            <label><span data-i18n="birthDate">出生日期</span><div class="input-wrap"><i data-lucide="calendar-days"></i><input name="birthDate" type="date" value="1995-05-20" required max="2026-11-06" step="1" aria-label="Birth date" /></div></label>
+            <div class="form-row">
+              <label><span data-i18n="birthTime">出生时间</span><div class="input-wrap"><i data-lucide="clock-3"></i><input name="birthTime" type="time" value="08:30" required step="60" aria-label="Birth time" /></div></label>
+              <label><span data-i18n="birthCity">出生城市</span><div class="input-wrap"><i data-lucide="map-pin"></i><input name="birthCity" type="text" value="Shanghai" required maxlength="60" placeholder="City / 城市" autocomplete="address-level2" /></div></label>
+            </div>
+            <button class="primary-button enter-button" type="submit"><span data-i18n="enterSpace">进入我的道场</span><i data-lucide="arrow-up-right"></i></button>
+            <div class="entry-note"><i data-lucide="sparkles"></i><span data-i18n="demoNotice">体验版 · 演示数据 · 无需注册</span></div>
+            <div class="entry-divider"></div>
+            <p class="privacy-note"><i data-lucide="lock-keyhole"></i><span data-i18n="localOnly">信息仅保留在当前浏览器中，不会上传。</span></p>
+          </form>
+        </div>
+        <footer class="landing-footer"><span>DAORA © 2026</span><span data-i18n="footerMantra">Less noise. More presence.</span><span data-i18n="spiritualDisclaimer">仅供自我探索与文化体验，非专业建议</span></footer>
+      </section>
+
+      <section id="room-ui" class="room-ui hidden" aria-label="DAORA room controls">
+        <header class="room-header glass-edge">
+          <a class="brand" href="#" data-action="home" aria-label="DAORA home"><span class="brand-seal small">道</span><span><b>DAORA</b><small data-i18n="miniDojo">我的迷你道场</small></span></a>
+          <div class="room-welcome"><span class="status-dot"></span><span data-i18n="roomGreeting">晚上好，欢迎回来</span><span class="welcome-separator">/</span><span id="room-date">静夜 · 21:08</span></div>
+          <div class="header-actions">
+            <div class="energy-chip" title="Demo energy reading"><span class="energy-mini-ring">78<small>%</small></span><span><small data-i18n="currentEnergy">当下能量</small><b data-i18n="energyCalm">平和 · 木</b></span></div>
+            <button class="coin-chip" data-panel="coins" aria-label="128 demo energy tokens"><i data-lucide="circle-dollar-sign"></i><b id="coin-count">128</b></button>
+            <button class="icon-button language-room" data-action="language" aria-label="Switch language"><span class="lang-short">EN</span></button>
+            <button class="icon-button" data-action="sound" aria-label="Enable ambient sound" aria-pressed="false"><i data-lucide="volume-x"></i></button>
+          </div>
+        </header>
+
+        <aside class="room-story">
+          <span class="vertical-caption">YOUR INNER SANCTUARY</span>
+          <div class="story-card">
+            <div class="story-ornament">☯</div>
+            <span class="eyebrow" data-i18n="yourSpace">YOUR SPACE</span>
+            <h2 data-i18n="roomName">山居 · 静室</h2>
+            <p data-i18n="roomDescription">一盏灯，一缕香。<br>此刻，无需赶往任何地方。</p>
+            <div class="story-rule"></div>
+            <div class="room-stats"><div><b>01</b><small data-i18n="daysHere">入室天数</small></div><div><b>05</b><small data-i18n="elements">五行印记</small></div><div><b id="reflection-count">03</b><small data-i18n="moments">觉察瞬间</small></div></div>
+          </div>
+        </aside>
+
+        <aside class="presence-widget">
+          <div class="presence-top"><span class="eyebrow" data-i18n="beHere">BE HERE, NOW</span><i data-lucide="wind"></i></div>
+          <div class="breathing-orb"><div></div><span data-i18n="breathe">呼吸</span></div>
+          <p id="breath-prompt" data-i18n="breatheIn">深深吸气，让心慢下来</p>
+          <button class="text-button" data-panel="breathe"><span data-i18n="minuteForSelf">留一分钟给自己</span><i data-lucide="arrow-right"></i></button>
+        </aside>
+
+        <div id="hotspots" class="hotspots" aria-label="Room objects"></div>
+        <div class="room-hint"><i data-lucide="mouse"></i><span data-i18n="roomHint">拖拽环视 · 滚轮靠近 · 点击光点探索</span></div>
+        <div class="view-controls">
+          <button class="icon-button" data-action="reset-view" aria-label="Reset room view" title="Reset view"><i data-lucide="scan"></i></button>
+          <button class="icon-button" data-action="walk" aria-label="Toggle first-person walk mode" aria-pressed="false" title="Walk with WASD"><i data-lucide="footprints"></i></button>
+          <button class="icon-button" data-action="immersive" aria-label="Toggle immersive mode" title="Immersive mode"><i data-lucide="maximize"></i></button>
+        </div>
+        <div id="walk-help" class="walk-help hidden"><b>W A S D</b><span data-i18n="walkHelp">移动 · 拖拽转身 · Esc 返回</span></div>
+
+        <nav class="bottom-nav" aria-label="Main navigation">
+          <button class="nav-item active" data-nav="room"><i data-lucide="house"></i><span data-i18n="navRoom">我的房间</span></button>
+          <button class="nav-item" data-nav="services"><i data-lucide="sparkles"></i><span data-i18n="navServices">服务</span></button>
+          <button class="nav-item" data-nav="records"><i data-lucide="book-open"></i><span data-i18n="navRecords">记录</span><span id="record-badge" class="nav-badge">3</span></button>
+          <button class="nav-item" data-nav="about"><i data-lucide="circle-help"></i><span data-i18n="navAbout">关于</span></button>
+        </nav>
+        <div class="demo-corner">DEMO · v1.0</div>
+      </section>
+
+      <div id="panel-backdrop" class="panel-backdrop hidden" data-action="close-panel"></div>
+      <aside id="detail-panel" class="detail-panel hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title"></aside>
+      <div id="modal-backdrop" class="modal-backdrop hidden">
+        <section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></section>
+      </div>
+      <div id="toast" class="toast" role="status" aria-live="polite"><i data-lucide="check"></i><span></span></div>
+    </div>
+  </body>
+</html>
