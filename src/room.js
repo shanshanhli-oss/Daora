@@ -3,7 +3,7 @@ import { createMaterials, textTexture, landscapeTexture, seededRandom } from './
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { box, cylinder, sphere, torus, mesh, lathe, tube, rodBetween, frame, vase, cup, plantBranch, paperLantern, makeGlow } from './geometry.js';
 import { createBagua } from './bagua.js';
-import { JourneyMemory } from './journey-memory.js';
+import { WallDoor } from './wall-door.js';
 
 /** All coordinates are in metres. Open front/right walls make the room an approachable diorama. */
 export class DojoRoom {
@@ -156,25 +156,22 @@ export class DojoRoom {
 
   buildMeditation() {
     const m=this.m;
-    const g=this.region('Oath floor · bagua',[0,.05,-.42]);g.visible=false;
-    cylinder(g,m.darkWood,1.98,.12,[0,.06,0],96);
-    cylinder(g,m.brass,1.94,.035,[0,.132,0],96);
-    cylinder(g,m.lacquer,1.90,.065,[0,.16,0],96);
-    const baguaMaterial=new THREE.MeshStandardMaterial({map:createBagua(),roughness:.63,metalness:.08,transparent:true});
-    mesh(new THREE.CircleGeometry(1.82,96),baguaMaterial,g,[0,.202,0],[-Math.PI/2,0,0]);
-    this.legacyBagua=g;
-    // Quiet viewing cushions mark the perimeter of the reflective memory disc.
-    for(const [x,z,color,angle] of [[-2.01,.66,m.plumLinen,.30],[1.55,1.28,m.ochreLinen,-.25]]) {
-      const seat=this.region('Memory viewing cushion',[x,.18,z]);seat.rotation.y=angle;
-      cylinder(seat,color,[.42,.47],.20,[0,0,0],40);
-      torus(seat,m.agedBrass,.45,.010,[0,.02,0],[Math.PI/2,0,0]);
-      sphere(seat,color,.10,[0,.105,0],[1,.25,1]);
-    }
-    const bowl=this.region('Singing bowl',[1.12,.255,-1.25]);
+    // A low bagua medallion returns the centre of the room to a calm floor, not a tower.
+    const g=this.region('Bagua floor',[0,.02,-.28]);
+    cylinder(g,m.darkWood,1.42,.028,[0,.02,0],72);
+    cylinder(g,m.brass,1.38,.012,[0,.038,0],72);
+    const baguaMaterial=new THREE.MeshStandardMaterial({map:createBagua(),roughness:.72,metalness:.06});
+    const disc=mesh(new THREE.CircleGeometry(1.32,72),baguaMaterial,g,[0,.048,0],[-Math.PI/2,0,0]);
+    disc.castShadow=false;
+    torus(g,m.gold,1.36,.008,[0,.05,0],[Math.PI/2,0,0]);
+    this.bagua=g;
+    const bowl=this.region('Singing bowl',[1.35,.2,-1.15]);
     lathe(bowl,m.brass,[[.07,0],[.09,.02],[.16,.08],[.19,.17],[.20,.20],[.18,.21],[.16,.15],[.10,.06],[0,.05]]);
     torus(bowl,m.gold,.184,.012,[0,.202,0],[Math.PI/2,0,0]);
-    this.journeyMemory=new JourneyMemory(this.root,m,{position:[0,.075,-.42]});
-    this.collider(0,-.42,2.38,2.38);
+    this.wallDoor=new WallDoor(this.root,m);
+    // Back wall, between the altar and the desk, beneath the element plaques.
+    this.wallDoor.root.position.set(-1.15,0,-4.28);
+    this.wallDoor.root.rotation.y=0;
   }
 
   buildSofa() {
@@ -317,7 +314,6 @@ export class DojoRoom {
 
   buildTeaCorner() {
     const m=this.m;
-    this.addHotspot('memory','旅程记忆 / Journey Memory','Where your journey leaves a little light',[0,2.89,-.42]);
     const table=this.region('Tea table',[-1.15,0,2.90],[0,.12,0]);
     box(table,m.lacquer,[2.20,.14,1.05],[0,.50,0],.065);
     box(table,m.brass,[2.14,.012,.99],[0,.576,0],.01);
@@ -515,7 +511,7 @@ export class DojoRoom {
   }
 
   addHotspot(id,title,description,position,options={}) {
-    const bilingualTitle=id==='memory'?'旅程记忆 / Journey Memory':title;
+    const bilingualTitle=title;
     const group=new THREE.Group();group.position.set(...position);this.root.add(group);
     const ring=new THREE.Mesh(new THREE.RingGeometry(.065,.088,32),new THREE.MeshBasicMaterial({color:0xf5d9a3,transparent:true,opacity:.88,side:THREE.DoubleSide,depthTest:false}));
     group.add(ring);
@@ -568,7 +564,7 @@ export class DojoRoom {
   /** Batch only immutable room meshes; never merge animated or interactive hierarchies. */
   optimizeStaticGeometry() {
     this.root.updateMatrixWorld(true);
-    const dynamic=new Set([this.journeyMemory?.root,...this.animated.map(item=>item.object),...this.lanterns.map(item=>item.tassel),...this.hotspotData.map(item=>item.group),...this.candleFlames.map(item=>item.flame)]);
+    const dynamic=new Set([this.wallDoor?.root,...this.animated.map(item=>item.object),...this.lanterns.map(item=>item.tassel),...this.hotspotData.map(item=>item.group),...this.candleFlames.map(item=>item.flame)]);
     const batches=new Map(),remove=[];
     const candidate=object=>{
       if(!object.isMesh||!object.geometry||Array.isArray(object.material))return false;

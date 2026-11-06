@@ -11,6 +11,7 @@ await page.waitForTimeout(2500);
 await page.screenshot({path:'screenshots/01-landing-first.png'});
 console.log('landing diagnostics',await page.evaluate(()=>window.daoraDiagnostics?.()));
 await page.locator('#birth-form button[type="submit"]').click();
+await page.locator('[data-action="confirm-entry"]').click();
 await page.waitForTimeout(5000);
 await page.screenshot({path:'screenshots/02-room-first.png'});
 console.log('room diagnostics',await page.evaluate(()=>window.daoraDiagnostics?.()));

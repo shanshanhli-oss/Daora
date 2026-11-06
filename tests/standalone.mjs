@@ -14,13 +14,15 @@ try {
  assert.equal(await page.locator('script[src]').count(),0,'No external scripts');
  assert.equal(await page.evaluate(()=>document.styleSheets.length),1,'CSS embedded');
  await page.locator('#birth-form button[type="submit"]').click();
+ await page.locator('[data-action="confirm-entry"]').click();
  await page.waitForFunction(()=>window.daoraDiagnostics()?.entered===true,null,{timeout:15000});
  await page.waitForTimeout(1200);
  // Rendering is paused ONLY in the CPU-only headless test, never in production.
  // DOM/UI events remain live; one last tick pins an actual WebGL room frame.
  await page.evaluate(()=>{const s=window.daora.getScene();s.tick();s.renderer.setAnimationLoop(null);});
- assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),10);
- progress('file URL, local WebGL, entry and all ten hotspots passed');
+ assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),9);
+ assert.equal(await page.evaluate(()=>Boolean(window.daora.getScene().room.wallDoor)),true);
+ progress('file URL, local WebGL, entry, wall door and nine hotspots passed');
  await page.locator('[data-nav="services"]').click();
  await page.waitForSelector('.service-card');
  await page.locator('[data-service="breathe"]').click();
@@ -36,13 +38,15 @@ try {
  progress('Switching bilingual UI via the room header control');
  await page.locator('#room-ui [data-action="language"]').click();
  await page.waitForSelector('#detail-title:text("Quiet traces of you")');
- progress('Records is translated; opening Journey Memory');
- await page.evaluate(()=>window.daora.openPanel('memory'));
- await page.waitForSelector('#detail-title:text("Journey Memory")');
- assert.equal(await page.locator('.journey-step:not(.personal)').count(),4);
+ progress('Records is translated; opening the inner journey');
+ await page.evaluate(()=>{window.daora.enterJourney();});
+ await page.waitForSelector('#journey-hud:not(.hidden)');
+ assert.ok(await page.locator('#journey-list li').count()>=3);
+ await page.locator('[data-action="leave-journey"]').click();
+ await page.waitForFunction(()=>window.daoraDiagnostics().mode==='room');
  // Keep an exact still of the actual standalone running from file:// for audit.
  await page.evaluate(()=>{const s=window.daora.getScene();s.tick();});
  assert.deepEqual(errors,[]);
  assert.equal(requests.some(url=>!url.startsWith('file:')&&!url.startsWith('blob:')&&!url.startsWith('data:')&&!url.startsWith('about:')),false);
- console.log('PASS: exact rebuilt file:// HTML, embedded CSS/JS, local WebGL, room entry, 10 hotspots, services, breathing, journal, language toggle, 4 demo Journey Memory milestones; 0 errors, 0 network assets.');
+ console.log('PASS: exact rebuilt file:// HTML, embedded CSS/JS, local WebGL, room entry, 9 hotspots, wall door, inner journey, services, breathing, journal, language toggle; 0 errors, 0 network assets.');
 } finally {await browser.close();}

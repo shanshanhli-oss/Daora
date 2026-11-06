@@ -1,12 +1,13 @@
 {
   "name": "daora-sanctuary",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "type": "module",
-  "description": "DAORA · 我的迷你道场 — an interactive 3D sanctuary with a swirling Journey Memory centrepiece.",
+  "description": "DAORA · 我的迷你道场 — a 3D sanctuary with offline BaZi pillars and an Inner Self Journey.",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
+    "build:pages": "GITHUB_PAGES=true vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:ui": "node tests/smoke.mjs",
     "build:file": "node scripts/standalone.mjs",
@@ -15,12 +16,14 @@
     "screenshots": "node tests/capture.mjs",
     "journey:screenshots": "node tests/journey-visual.mjs",
     "journey:test": "node tests/journey-smoke.mjs",
-    "test:all": "npm run journey:test && npm run test:ui && npm run test:standalone",
+    "test:bazi": "node --test tests/bazi.test.mjs",
+    "test:all": "npm run test:bazi && npm run journey:test && npm run test:ui && npm run test:standalone",
     "verify:release": "npm run build:all && npm run test:all",
     "package:handoff": "node scripts/package.mjs"
   },
   "dependencies": {
     "lucide": "^0.468.0",
+    "lunar-javascript": "^1.7.8",
     "three": "^0.180.0"
   },
   "devDependencies": {

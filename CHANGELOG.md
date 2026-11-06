@@ -1,4 +1,14 @@
-# DAORA prototype v1.1 — Journey Memory
+# DAORA prototype v1.2 — Inner Self Journey
+
+- Removed the central Journey Memory tower. The room centre is a low bagua floor disc again.
+- Added one wall door on the back wall. Warm light leaks around the leaf. Click it, or walk into it with WASD, to pass into a separate Inner Self Journey / 内在旅程.
+- The journey shows journal entries, rituals, the current reading and personal notes as dated doors and screens along a gentle spiral. New milestones are saved in `localStorage`. A return door and a button lead back to the room.
+- Replaced the landing with a welcome page. The Chinese oath is shown exactly, with an English translation in EN mode.
+- Birth place accepts a bundled offline city list (hundreds of cities, including UK and Chinese cities, with latitude, longitude and IANA timezone) or manual coordinates and timezone.
+- Local birth time converts to Beijing time (`Asia/Shanghai`) with historical daylight saving from IANA data. True solar time is shown beside it. Four Pillars come from `lunar-javascript`, changing year and month at the solar terms. The dominant element themes the room.
+- London, 18 June 1998, 07:30 (BST) converts to 14:30 Beijing time. Pillars: 戊寅 戊午 丙申 乙未.
+
+## Prototype v1.1 — Journey Memory
 
 - Replaced the central bagua platform with a person-scale helix of five white paneled portals and ten locally drawn glowing memory frames.
 - Added warm ajar thresholds, dark reflective-looking five-element disc, sparse orbital traces and slowly rising particles.
@@ -20,4 +30,4 @@
 
 ## Explicitly not included
 
-No true BaZi calculation, external account, cloud persistence, booking or checkout, online deployment, native iOS/Android wrapper, or supplied Lingguang code integration is claimed. Those are intentionally outside this standalone prototype.
+No external account, cloud persistence, booking or checkout, online deployment, native iOS/Android wrapper, or supplied Lingguang code integration is claimed. The Four Pillars are a calendar calculation from an offline library, not a professional reading.

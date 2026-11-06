@@ -24,7 +24,7 @@ function grain(ctx, w, h, seed, amount = 7500) {
 }
 
 /** Original mini-artworks, not copies of the reference or network image assets. */
-function memoryTexture(kind, index = 0) {
+export function memoryTexture(kind, index = 0, label = '') {
   return canvasTexture(640, 448, (ctx, w, h) => {
     const random = seededRandom(179 + index * 287);
     const gradient = ctx.createLinearGradient(0, 0, w, h);
@@ -158,52 +158,9 @@ function memoryTexture(kind, index = 0) {
     }
     // Restrained border and tiny archival numbering; no QR code, reference caption or promotional copy.
     line('rgba(238,208,153,.25)',1);ctx.strokeRect(11,11,w-22,h-22);
-    ctx.font='12px Georgia, serif';ctx.fillStyle='rgba(232,206,158,.75)';ctx.fillText(`${String(index+1).padStart(2,'0')}  /  旅程记忆`,25,h-19);
+    ctx.font='12px Georgia, serif';ctx.fillStyle='rgba(232,206,158,.75)';ctx.fillText(label || String(index + 1).padStart(2, '0'), 25, h - 19);
     const vignette=ctx.createRadialGradient(w/2,h/2,60,w/2,h/2,410);vignette.addColorStop(0,'rgba(8,8,13,0)');vignette.addColorStop(1,'rgba(8,8,13,.27)');ctx.fillStyle=vignette;ctx.fillRect(0,0,w,h);
     grain(ctx,w,h,47+index,4200);
-  });
-}
-
-function floorTexture() {
-  return canvasTexture(1536,1536,(ctx,w,h)=>{
-    const c=w/2;
-    const background=ctx.createRadialGradient(c,c,10,c,c,c);
-    background.addColorStop(0,'#0d1119');background.addColorStop(.38,'#151923');background.addColorStop(.74,'#211b23');background.addColorStop(1,'#0e1016');ctx.fillStyle=background;ctx.fillRect(0,0,w,h);
-    const circle=(radius,color,width)=>{ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.arc(c,c,radius,0,TAU);ctx.stroke();};
-    circle(741,'#8f734e',3);circle(724,'rgba(167,135,84,.30)',2);circle(639,'rgba(165,136,92,.17)',2);circle(523,'rgba(154,131,95,.13)',1);circle(231,'rgba(164,136,88,.23)',2);
-    const colors=['#b2bdaf','#84a7b4','#bd9d6a','#ba887c','#9a83a2'];
-    const elements=['金','水','土','木','火'];
-    for(let i=0;i<128;i++){
-      const a=i/128*TAU,inside=i%8===0?684:701;
-      ctx.strokeStyle=i%8===0?'rgba(200,165,101,.42)':'rgba(180,157,110,.2)';ctx.lineWidth=i%8===0?2:1;
-      ctx.beginPath();ctx.moveTo(c+Math.cos(a)*inside,c+Math.sin(a)*inside);ctx.lineTo(c+Math.cos(a)*716,c+Math.sin(a)*716);ctx.stroke();
-    }
-    for(let i=0;i<5;i++){
-      const a=-Math.PI/2+i/5*TAU;
-      const next=a+TAU/5;
-      ctx.save();ctx.translate(c,c);ctx.rotate(a);
-      ctx.strokeStyle=colors[i];ctx.globalAlpha=.38;ctx.lineWidth=3;
-      ctx.beginPath();ctx.moveTo(0,-625);ctx.lineTo(0,-490);ctx.lineTo(49,-447);ctx.lineTo(49,-334);ctx.stroke();
-      ctx.beginPath();ctx.moveTo(-24,-411);ctx.lineTo(-24,-340);ctx.stroke();
-      ctx.lineWidth=1.5;circle(-0,-479,12,colors[i]);
-      ctx.globalAlpha=1;
-      ctx.fillStyle=colors[i];ctx.font='42px "Noto Serif CJK SC",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(elements[i],0,-557);
-      ctx.font='11px Georgia,serif';ctx.fillStyle='rgba(200,184,145,.52)';ctx.fillText(['CLARITY','FLOW','GROUND','GROWTH','WARMTH'][i],0,-676);
-      ctx.strokeStyle='rgba(192,162,104,.15)';ctx.lineWidth=2;ctx.beginPath();ctx.arc(0,0,575,-.275,.275);ctx.stroke();
-      ctx.restore();
-      const na=a+(TAU/5)*.5;
-      circle(c+Math.cos(na)*260,c+Math.sin(na)*260,5,colors[i],true);
-      circle(c+Math.cos(na)*260,c+Math.sin(na)*260,13,'rgba(185,153,95,.18)');
-    }
-    // A quiet central yin-yang/rosette, largely covered by the tower's dark centre.
-    circle(172,'rgba(198,169,110,.30)',2);
-    for(let i=0;i<8;i++){ctx.save();ctx.translate(c,c);ctx.rotate(i/8*TAU);ctx.fillStyle='rgba(161,140,103,.24)';ctx.beginPath();ctx.ellipse(0,-80,18,58,.18,0,TAU);ctx.fill();ctx.restore();}
-    circle(c,c,10,'rgba(225,198,138,.45)',true);
-    // Reflected light streaks are a material treatment, not a real-time second scene render.
-    ctx.save();ctx.translate(c,c);ctx.scale(1,.29);ctx.globalAlpha=.075;
-    const reflected=ctx.createLinearGradient(-650,0,650,0);reflected.addColorStop(0,'rgba(145,174,176,0)');reflected.addColorStop(.4,'rgba(148,174,178,.65)');reflected.addColorStop(.6,'rgba(226,184,114,.65)');reflected.addColorStop(1,'rgba(226,184,114,0)');
-    ctx.fillStyle=reflected;ctx.fillRect(-600,-360,1250,720);ctx.restore();
-    grain(ctx,w,h,99,11500);
   });
 }
 
@@ -220,7 +177,7 @@ function doorwayTexture(index) {
   });
 }
 
-function createMaterials() {
+export function createMemoryMaterials() {
   return {
     ivory: new THREE.MeshPhysicalMaterial({color:0xd8d3c5,roughness:.46,metalness:.01,clearcoat:.12}),
     molding: new THREE.MeshStandardMaterial({color:0xf0e8d7,roughness:.37}),
@@ -232,7 +189,7 @@ function createMaterials() {
   };
 }
 
-function createDoor(materials, m, index, open) {
+export function createDoor(materials, m, index, open) {
   const group=new THREE.Group();group.name=`Memory portal ${index+1}`;
   const w=.81,h=1.44,frameWidth=.054;
   // A real opening: jambs, moulded lintel, door leaf, inset panels and small hardware.
@@ -274,7 +231,7 @@ function createDoor(materials, m, index, open) {
   return {group,lightMaterial};
 }
 
-function createFrame(m, materials, texture, index) {
+export function createFrame(m, materials, texture, index) {
   const group=new THREE.Group();group.name=`Journey memory ${index+1}`;
   const w=index%4===0?.93:.81,h=index%4===0?.65:.56;
   box(group,materials.backing,[w+.070,h+.070,.047],[0,0,-.032],.012);
@@ -293,112 +250,4 @@ function createFrame(m, materials, texture, index) {
   }
   makeGlow(group,m,[0,0,-.06],index%3===0?0x8da9bd:0xcf9d6c,1.10,.075);
   return group;
-}
-
-export class JourneyMemory {
-  constructor(parent, materials, {position=[0,.06,-.42]}={}) {
-    this.root=new THREE.Group();this.root.name='旅程记忆 · Journey Memory';this.root.position.set(...position);parent.add(this.root);
-    this.materials=materials;this.m=materials;this.memoryMaterials=createMaterials();this.floaters=[];this.doorLights=[];
-    this.motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
-    this.reducedMotion=this.motionPreference.matches;
-    this.motionPreference.addEventListener('change',event=>{this.reducedMotion=event.matches;});
-    this.buildFloor();this.buildTower();this.buildRisingLight();
-  }
-
-  buildFloor() {
-    const m=this.m,memoryMaterials=this.memoryMaterials;
-    cylinder(this.root,memoryMaterials.backing,1.86,.075,[0,.015,0],96);
-    cylinder(this.root,m.bronze,1.825,.018,[0,.056,0],96);
-    const texture=floorTexture();
-    const floorMaterial=new THREE.MeshPhysicalMaterial({map:texture,color:0xc3bbb0,metalness:.81,roughness:.19,clearcoat:1,clearcoatRoughness:.09,envMapIntensity:.8,emissiveMap:texture,emissive:0xae9067,emissiveIntensity:.13});
-    const floor=mesh(new THREE.CircleGeometry(1.81,96),floorMaterial,this.root,[0,.069,0],[-Math.PI/2,0,0]);floor.castShadow=false;floor.receiveShadow=true;this.floorMaterial=floorMaterial;
-    
-    torus(this.root,m.gold,1.798,.011,[0,.077,0],[Math.PI/2,0,0]);
-    torus(this.root,m.bronze,1.85,.008,[0,.008,0],[Math.PI/2,0,0]);
-    // Five small inlaid stones echo the five phases, not a dense circuit board.
-    const colors=[0xc5bfa5,0x819a7a,0x87a8b2,0xbd8a69,0xa38a6c];
-    for(let i=0;i<5;i++) {
-      const a=-Math.PI/2+i/5*TAU;
-      const stoneMaterial=new THREE.MeshPhysicalMaterial({color:colors[i],metalness:.65,roughness:.20,emissive:colors[i],emissiveIntensity:.12});
-      sphere(this.root,stoneMaterial,.038,[Math.sin(a)*1.61,.079,Math.cos(a)*1.61],[1,.3,1]);
-      makeGlow(this.root,m,[Math.sin(a)*1.61,.097,Math.cos(a)*1.61],colors[i],.19,.3);
-    }
-  }
-
-  buildTower() {
-    const m=this.m,mm=this.memoryMaterials;
-    const random=seededRandom(498);
-    const pattern=['door','landscape','map','door','neural','door','calligraphy','river','topography','pavilion','door','breath','lotus','horizon','door'];
-    const helix=new THREE.Group();helix.name='Slowly orbiting memory helix';this.root.add(helix);this.helix=helix;
-    pattern.forEach((kind,index)=>{
-      const theta=.20+index*.91;
-      const radius=1.02+Math.sin(index*.68)*.105;
-      const float=new THREE.Group();float.name=`Memory fragment ${index+1}`;
-      float.position.set(Math.sin(theta)*radius,1.09+index*.251,Math.cos(theta)*radius);
-      float.rotation.set(Math.sin(index*1.1)*.048,theta+Math.sin(index)*.095,Math.sin(index*1.43)*.079);
-      helix.add(float);
-      let content;
-      if(kind==='door') {
-        content=createDoor(mm,m,index,index%2===0||index===6||index===12);
-        float.add(content.group);this.doorLights.push(content.lightMaterial);
-      } else {
-        const type=kind==='screen'?'neural':kind;
-        content=createFrame(m,mm,memoryTexture(type,index),index);float.add(content);
-      }
-      this.floaters.push({object:float,y:float.position.y,z:float.rotation.z,phase:random()*TAU,speed:.55+random()*.22});
-    });
-    // A central dark column is a subtle occluder, not a heavy physical pillar.
-    const voidMaterial=new THREE.MeshStandardMaterial({color:0x080910,roughness:.98,transparent:true,opacity:.25,depthWrite:false});
-    cylinder(helix,voidMaterial,[.20,.37],3.85,[0,2.39,0],40);
-    // Three delicate golden memories trace the void, visually tying the fragments together.
-    for(let thread=0;thread<3;thread++) {
-      const points=[];
-      for(let i=0;i<120;i++){
-        const t=i/119,a=t*TAU*1.55+thread*TAU/3+.20;
-        points.push(new THREE.Vector3(Math.sin(a)*(.71+Math.sin(t*4)*.08),.55+t*4.17,Math.cos(a)*(.71+Math.sin(t*4)*.08)));
-      }
-      const line=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:thread===1?0x7e9e9c:0xc0a373,transparent:true,opacity:thread===1?.16:.24,depthWrite:false}));helix.add(line);
-    }
-    makeGlow(helix,m,[0,.44,0],0xe3b475,1.1,.27);
-    const memoryLight=new THREE.PointLight(0xffc683,5.7,4.8,2);memoryLight.position.set(0,1.5,.1);this.root.add(memoryLight);this.memoryLight=memoryLight;
-    const upperLight=new THREE.PointLight(0xbcc4b1,3.0,4.0,2);upperLight.position.set(0,3.62,0);this.root.add(upperLight);this.upperLight=upperLight;
-    const spot=new THREE.SpotLight(0xffd8a1,6,5.8,Math.PI/3,.83,1.7);spot.position.set(0,4.75,0);spot.target.position.set(0,.07,0);this.root.add(spot,spot.target);
-  }
-
-  buildRisingLight() {
-    const random=seededRandom(1138),count=66,positions=new Float32Array(count*3),colors=new Float32Array(count*3);
-    this.particleSeeds=[];
-    const gold=new THREE.Color(0xe0bd81),pale=new THREE.Color(0xa5b6b2);
-    for(let i=0;i<count;i++) {
-      const a=random()*TAU,r=.17+random()*.81,y=random()*4.5;
-      this.particleSeeds.push({a,r,y,speed:.035+random()*.085});
-      positions.set([Math.cos(a)*r,y,Math.sin(a)*r],i*3);
-      const color=i%3?gold:pale;colors.set([color.r,color.g,color.b],i*3);
-    }
-    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));geometry.setAttribute('color',new THREE.BufferAttribute(colors,3));
-    const material=new THREE.PointsMaterial({color:0xffffff,vertexColors:true,size:.057,map:this.m.glow,transparent:true,opacity:.59,depthWrite:false,blending:THREE.AdditiveBlending});
-    this.particles=new THREE.Points(geometry,material);this.particles.name='Ascending journey light';this.root.add(this.particles);
-  }
-
-  update(seconds) {
-    this.helix.rotation.y=this.reducedMotion?.22:seconds*.023;
-    this.floorMaterial.emissiveIntensity=this.reducedMotion?.13:.13+Math.sin(seconds*.56)*.025;
-    this.floaters.forEach(({object,y,z,phase,speed})=>{
-      object.position.y=y+(this.reducedMotion?0:Math.sin(seconds*speed+phase)*.038);
-      object.rotation.z=z+(this.reducedMotion?0:Math.sin(seconds*.4+phase)*.018);
-    });
-    this.doorLights.forEach((light,index)=>{
-      const pulse=this.reducedMotion?0:Math.sin(seconds*.85+index*1.73);
-      light.glow.material.opacity=(light.open?.41:.09)+pulse*(light.open?.07:.025);
-      light.portalMaterial.color.setRGB(1,.91+pulse*.035,.77+pulse*.065);
-    });
-    this.memoryLight.intensity=this.reducedMotion?5.7:5.7+Math.sin(seconds*1.05)*.5;
-    this.upperLight.intensity=this.reducedMotion?3.0:3.0+Math.sin(seconds*.77+.7)*.35;
-    const positions=this.particles.geometry.attributes.position;
-    this.particleSeeds.forEach(({a,r,y,speed},index)=>{
-      const height=this.reducedMotion?y:(y+seconds*speed)%4.7,angle=this.reducedMotion?a:a+seconds*.052;
-      positions.setXYZ(index,Math.cos(angle)*r,this.reducedMotion?height:height+.15,Math.sin(angle)*r);
-    });
-    positions.needsUpdate=true;
-  }
 }

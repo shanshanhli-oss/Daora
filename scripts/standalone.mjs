@@ -19,6 +19,7 @@ const script=await fs.readFile(outfile,'utf8');
 // Split the document from its native module, which cannot otherwise load through file://.
 html=html.replace('<script type="module" src="/src/main.js"></script>',()=>`<script>${script.replaceAll('</script','<\\/script')}</script>`);
 await fs.writeFile('dist/daora-standalone.html',html);
+await fs.copyFile('dist/daora-standalone.html','daora-standalone.html');
 await fs.unlink(outfile);
 const bytes=(await fs.stat('dist/daora-standalone.html')).size;
 console.log(`Standalone HTML: dist/daora-standalone.html (${(bytes/1024/1024).toFixed(2)} MB)`);
