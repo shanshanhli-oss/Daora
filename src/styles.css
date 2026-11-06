@@ -110,7 +110,7 @@ input { min-width: 0; }
 .welcome-separator { margin: 0 7px; color: #6e6053; }
 .header-actions { display: flex; gap: 12px; align-items: center; }
 .energy-chip { display: flex; align-items: center; gap: 9px; margin-right: 9px; }
-.energy-mini-ring { width: 37px; height: 37px; display: flex; align-items: center; justify-content: center; border: 2px solid #ac925b; border-left-color: rgba(177, 151, 90, .22); border-radius: 50%; font-family: Georgia, serif; font-size: 11px; color: #dbbe82; transform: rotate(-40deg); }
+.energy-mini-ring { width: 37px; height: 37px; display: flex; align-items: center; justify-content: center; border: 2px solid #ac925b; border-left-color: rgba(177, 151, 90, .22); border-radius: 50%; font-family: var(--serif); font-size: 16px; color: #dbbe82; }
 .energy-mini-ring small { font-size: 6px; margin-top: 3px; }
 .energy-chip > span:last-child { display: block; }
 .energy-chip > span small { font-size: 8px; color: #928674; letter-spacing: .9px; display: block; margin-bottom: 4px; }
@@ -425,3 +425,65 @@ input { min-width: 0; }
 .journey-step.personal .journey-step-number { background: rgba(111,136,112,.14); border-color: rgba(128,161,147,.36); color: #b2c5ad; }
 .journey-step.personal h3 { color: #c4c9b2; }
 .secondary-button.panel-action { width: 100%; display: flex; justify-content: center; align-items: center; gap: 9px; }
+
+/* Welcome oath, birth place and four pillars */
+.hero-copy { display: flex; flex-direction: column; align-self: center; max-height: 100%; overflow: auto; }
+.hero-copy h1.welcome-oath { font-family: var(--serif); font-size: clamp(16px, 1.22vw, 20px); font-weight: 450; line-height: 1.72; letter-spacing: .045em; color: #f3eadc; margin: 10px 0 16px; text-shadow: none; text-wrap: pretty; }
+.welcome-oath-en { margin: 0; max-width: 62ch; color: #b7aa98; font-size: 13px; line-height: 1.65; letter-spacing: .01em; }
+.landing.lang-en .hero-copy h1.welcome-oath { order: 2; font-size: 15px; line-height: 1.7; letter-spacing: .03em; color: #cbbfaa; margin-top: 16px; }
+.landing.lang-en .welcome-oath-en { order: 1; font-size: clamp(16px, 1.25vw, 20px); line-height: 1.7; color: #f3eadc; font-family: Georgia, "Iowan Old Style", serif; }
+.city-field { position: relative; }
+.city-suggest { position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% - 8px); margin: 0; padding: 6px 0; list-style: none; background: #241c20; border: 1px solid rgba(198, 168, 112, .4); max-height: 220px; overflow: auto; }
+.city-suggest li { padding: 8px 14px; font-size: 12px; letter-spacing: .3px; color: #eadcc4; cursor: pointer; }
+.city-suggest li:hover, .city-suggest li[aria-selected="true"] { background: rgba(198, 168, 112, .14); }
+.manual-toggle { justify-content: flex-start; padding: 0 0 12px; }
+.manual-place { margin-bottom: 8px; }
+.entry-card { max-height: min(760px, calc(100vh - 190px)); overflow: auto; }
+.pillars-result { position: relative; }
+.pillars-result .pillar-cell { padding: 8px 2px; }
+.pillars-result .pillar-cell b { font-size: 18px; }
+.pillars-result .element-row { margin-bottom: 7px; }
+.pillars-result .time-pair, .pillars-result .solar-note { margin-bottom: 8px; }
+.pillars-result .enter-button { position: sticky; bottom: 0; z-index: 2; }
+.time-pair { display: grid; gap: 10px; margin: 8px 0 14px; }
+.time-pair div, .solar-note { padding: 10px 12px; border: 1px solid rgba(186, 156, 104, .22); background: rgba(12, 10, 12, .25); }
+.time-pair small, .solar-note small, .pillar-cell small { display: block; letter-spacing: 1.4px; font-size: 9px; color: #a89270; margin-bottom: 4px; }
+.time-pair b, .solar-note b { font-family: Georgia, serif; font-weight: 400; font-size: 16px; color: #f0e2c6; }
+.time-pair em, .solar-note em { display: block; margin-top: 4px; font-style: normal; font-size: 10px; color: #9c8d78; }
+.solar-note { margin-bottom: 16px; }
+.pillar-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 8px 0 16px; }
+.pillar-cell { text-align: center; padding: 12px 4px; border: 1px solid rgba(198, 168, 112, .28); background: rgba(198, 168, 112, .04); }
+.pillar-cell b { display: block; font-family: var(--serif); font-size: 22px; font-weight: 450; letter-spacing: .12em; color: #f3e6cc; }
+.pillar-cell em { display: block; margin-top: 6px; font-style: normal; font-size: 11px; letter-spacing: .2em; color: #c4b089; }
+.pillar-note { font-size: 11px; line-height: 1.7; color: #a89884; margin: 0 0 14px; }
+.dominant-line { font-family: var(--serif); letter-spacing: .12em; color: #f0d7ae; margin: 0 0 16px; }
+html[data-element="metal"] { --gold: #d5d0c2; --gold-bright: #f2eee4; }
+html[data-element="wood"] { --gold: #b7c4a2; --gold-bright: #d5e2c4; }
+html[data-element="water"] { --gold: #a9c0ce; --gold-bright: #d5e6f0; }
+html[data-element="fire"] { --gold: #e0a888; --gold-bright: #f3cbb6; }
+html[data-element="earth"] { --gold: #d4bc90; --gold-bright: #f0ddb8; }
+
+.passage { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; background: #100e12; opacity: 0; pointer-events: none; transition: opacity .7s ease; }
+.passage.active { opacity: 1; pointer-events: auto; }
+.passage span { font-family: var(--serif); letter-spacing: .42em; font-size: 18px; color: #f0e2c4; }
+
+.journey-hud { pointer-events: auto; position: absolute; left: 28px; top: 108px; bottom: 108px; width: min(320px, calc(100% - 56px)); padding: 22px 18px 16px; overflow: auto; background: linear-gradient(160deg, rgba(22, 18, 24, .88), rgba(16, 14, 18, .72)); border: 1px solid rgba(198, 168, 112, .28); backdrop-filter: blur(10px); }
+.journey-hud h2 { font-family: var(--serif); font-weight: 450; letter-spacing: .18em; font-size: 28px; margin: 8px 0; color: #f0e2c4; }
+.journey-hud p { font-size: 12px; line-height: 1.7; color: #cbbda8; margin: 0 0 14px; }
+.journey-list { list-style: none; margin: 0 0 14px; padding: 0; }
+.journey-list li { padding: 10px 0; border-top: 1px solid rgba(198, 168, 112, .16); cursor: pointer; }
+.journey-list li small { display: block; color: #a89270; letter-spacing: .08em; font-size: 10px; }
+.journey-list li b { display: block; margin: 3px 0; font-weight: 450; color: #f0e2c4; }
+.journey-list li span { display: block; color: #b7aa98; font-size: 12px; line-height: 1.5; }
+.journey-list li.sample { opacity: .72; }
+.journey-list li.selected b { color: #fff6e4; }
+.journey-hud .secondary-button, .journey-hud .primary-button { width: 100%; margin-top: 8px; }
+.room-ui.in-journey .room-story, .room-ui.in-journey .presence-widget { display: none; }
+.milestone-kind { width: 100%; margin-top: 8px; height: 42px; color: #eadcc4; background: rgba(12, 10, 12, .35); border: 1px solid rgba(186, 156, 104, .28); }
+
+@media (max-width: 800px) {
+  .welcome-oath { font-size: 16px; letter-spacing: .04em; }
+  .entry-card { max-height: none; }
+  .pillar-cell b { font-size: 18px; }
+  .journey-hud { left: 12px; right: 12px; width: auto; top: auto; bottom: 86px; max-height: 42vh; }
+}

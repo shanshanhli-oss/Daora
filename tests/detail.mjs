@@ -18,6 +18,6 @@ await browser.close();
 const mobileBrowser=await chromium.launch({headless:true,executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const mobile=await mobileBrowser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
 await mobile.goto('http://127.0.0.1:5173',{waitUntil:'networkidle'});await mobile.waitForSelector('#landing:not(.hidden)');await mobile.screenshot({path:'screenshots/mobile-landing-first.png',fullPage:true});
-await mobile.locator('#birth-form button[type="submit"]').click();await mobile.waitForTimeout(3000);await mobile.screenshot({path:'screenshots/mobile-room-first.png'});
+await mobile.locator('#birth-form button[type="submit"]').click();await mobile.locator('[data-action="confirm-entry"]').click();await mobile.waitForTimeout(3000);await mobile.screenshot({path:'screenshots/mobile-room-first.png'});
 console.log('errors',errors);console.log('mobile overflow',await mobile.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth})));
 await mobileBrowser.close();

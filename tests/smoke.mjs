@@ -10,14 +10,22 @@ try {
   await page.goto(base,{waitUntil:'networkidle',timeout:60000});
   progress('Landing loaded');
   await page.waitForSelector('#landing:not(.hidden)',{timeout:45000});
-  assert.equal(await page.locator('#birth-form input').count(),3);
-  await page.locator('[name="birthCity"]').fill('Shanghai');
+  assert.equal(await page.locator('#birth-form input[name="birthDate"]').count(),1);
+  assert.equal(await page.locator('#birth-form input[name="latitude"]').count(),1);
+  await page.locator('[name="birthDate"]').fill('1998-06-18');
+  await page.locator('[name="birthTime"]').fill('07:30');
+  await page.locator('[name="birthCity"]').fill('London');
+  await page.locator('#city-suggest li').first().click();
   await page.locator('#birth-form button[type="submit"]').click();
+  await page.waitForSelector('#pillars-result:not(.hidden)');
+  assert.match(await page.locator('#pillars-result').innerText(),/14:30/);
+  await page.locator('[data-action="confirm-entry"]').click();
   await page.waitForFunction(()=>window.daoraDiagnostics()?.entered,{timeout:20000});
   await page.waitForTimeout(1700);
   // CPU-only test runner: pin one rendered room, keep real DOM interaction.
   await page.evaluate(()=>window.daora.getScene().renderer.setAnimationLoop(null));
-  assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),10);
+  assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),9);
+  assert.equal(await page.evaluate(()=>window.daoraDiagnostics().element),'土');
   assert.ok(await page.locator('#landing').evaluate(el=>el.classList.contains('hidden')));
 
   await page.locator('[data-nav="services"]').click();
@@ -77,7 +85,7 @@ try {
   await page.locator('[data-action="sound"]').click();
   await page.screenshot({path:'screenshots/smoke-desktop.png'});
   assert.deepEqual(errors,[],'No browser runtime errors');
-  console.log('PASS desktop: form → room, 10 hotspots, services, breathing, journal persistence, EN toggle, about, camera reset, WASD movement/Escape, chart, audio; 0 console errors.');
+  console.log('PASS desktop: pillars → room, 9 hotspots, services, breathing, journal persistence, EN toggle, about, camera reset, WASD movement/Escape, chart, audio; 0 console errors.');
   await page.close();
 
   const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
@@ -87,6 +95,7 @@ try {
   const overflow=await mobile.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
   assert.equal(overflow,false,'Mobile landing should not overflow horizontally');
   await mobile.locator('#birth-form button[type="submit"]').click();
+  await mobile.locator('[data-action="confirm-entry"]').click();
   await mobile.waitForFunction(()=>window.daoraDiagnostics()?.entered,{timeout:20000});
   await mobile.locator('[data-nav="services"]').click();await mobile.waitForSelector('#detail-panel:not(.hidden)');
   await mobile.screenshot({path:'screenshots/smoke-mobile-services.png'});

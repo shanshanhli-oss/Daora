@@ -32,34 +32,38 @@
         </header>
         <div class="landing-layout">
           <div class="hero-copy">
-            <div class="eyebrow hero-eyebrow"><span></span><span data-i18n="spaceToReturn">A SPACE TO RETURN TO YOURSELF</span></div>
-            <h1 id="landing-title" data-i18n-html="heroTitle">回到内心，<br><em>安住于此。</em></h1>
-            <p class="hero-subtitle" data-i18n="heroSubtitle">在喧嚣之外，为自己留一方天地。<br>以五行为引，让每一次觉察，都成为空间的生长。</p>
-            <div class="hero-features">
-              <div><span class="feature-mark">01</span><p><b data-i18n="featureOne">看见你的内在节律</b><small data-i18n="featureOneSub">生辰 · 五行 · 能量</small></p></div>
-              <div><span class="feature-mark">02</span><p><b data-i18n="featureTwo">住进会生长的空间</b><small data-i18n="featureTwoSub">每一次记录，都留下痕迹</small></p></div>
-              <div><span class="feature-mark">03</span><p><b data-i18n="featureThree">把片刻留给自己</b><small data-i18n="featureThreeSub">呼吸 · 冥想 · 日常仪式</small></p></div>
-            </div>
-            <div class="orbit-signature" aria-hidden="true">
-              <svg viewBox="0 0 120 120"><circle cx="60" cy="60" r="51" /><circle cx="60" cy="60" r="43" /><path d="M60 17v8m0 70v8M17 60h8m70 0h8M30 30l6 6m48 48 6 6M30 90l6-6m48-48 6-6" /><path class="yin" d="M60 37a23 23 0 1 0 0 46 11.5 11.5 0 1 0 0-23 11.5 11.5 0 1 1 0-23Z"/><circle cx="60" cy="48.5" r="3"/><circle class="yin-dot" cx="60" cy="71.5" r="3"/></svg>
-              <span>一方静境 · 归于自己<br><i>YOUR SPACE. YOUR RHYTHM.</i></span>
-            </div>
+            <div class="eyebrow hero-eyebrow"><span></span><span data-i18n="welcomeKicker">THE SIGNATURE YOU ARRIVED WITH</span></div>
+            <h1 id="landing-title" class="welcome-oath" lang="zh-CN">你出生的那一刻，星辰的位置、大地的湿度、风的走向、你的第一声啼哭，都在天地之间留下了一张唯一的签名。这张签名，叫八字。它不是锁，不是镣铐，不是判决书，它是你的出场设置，是你在这个世界上只能是你而不能是别人的那个东西，接受这件事情，比改变任何事情都更需要勇气。</h1>
+            <p class="welcome-oath-en" lang="en" data-i18n="welcomeOathEn">In the moment you were born, the positions of the stars, the dampness of the earth, the way the wind was turning, and your first cry left a signature between heaven and earth that could belong to no one else. That signature is called BaZi — the Eight Characters. It is not a lock, not a shackle, not a verdict. It is the setting with which you came onstage: the fact that, in this world, you can only be you and not anybody else. Accepting this asks more courage than changing anything.</p>
           </div>
 
-          <form id="birth-form" class="entry-card">
-            <div class="card-topline"><span data-i18n="beginJourney">BEGIN YOUR JOURNEY</span><span>✦</span></div>
-            <h2 data-i18n="createSpace">创造你的专属静境</h2>
-            <p class="entry-intro" data-i18n="entryIntro">从你的生辰开始，探索此刻的五行能量。</p>
-            <label><span data-i18n="birthDate">出生日期</span><div class="input-wrap"><i data-lucide="calendar-days"></i><input name="birthDate" type="date" value="1995-05-20" required max="2026-11-06" step="1" aria-label="Birth date" /></div></label>
-            <div class="form-row">
+          <div class="entry-card">
+            <form id="birth-form">
+              <div class="card-topline"><span data-i18n="beginJourney">BEGIN YOUR JOURNEY</span><span>✦</span></div>
+              <h2 data-i18n="createSpace">写下你的出场</h2>
+              <p class="entry-intro" data-i18n="entryIntro">出生日期、时刻与地点。四柱按节气起算，并换算为北京时间。</p>
+              <label><span data-i18n="birthDate">出生日期</span><div class="input-wrap"><i data-lucide="calendar-days"></i><input name="birthDate" type="date" value="1995-05-20" required min="1900-01-01" max="2026-11-06" step="1" aria-label="Birth date" /></div></label>
               <label><span data-i18n="birthTime">出生时间</span><div class="input-wrap"><i data-lucide="clock-3"></i><input name="birthTime" type="time" value="08:30" required step="60" aria-label="Birth time" /></div></label>
-              <label><span data-i18n="birthCity">出生城市</span><div class="input-wrap"><i data-lucide="map-pin"></i><input name="birthCity" type="text" value="Shanghai" required maxlength="60" placeholder="City / 城市" autocomplete="address-level2" /></div></label>
-            </div>
-            <button class="primary-button enter-button" type="submit"><span data-i18n="enterSpace">进入我的道场</span><i data-lucide="arrow-up-right"></i></button>
-            <div class="entry-note"><i data-lucide="sparkles"></i><span data-i18n="demoNotice">体验版 · 演示数据 · 无需注册</span></div>
-            <div class="entry-divider"></div>
-            <p class="privacy-note"><i data-lucide="lock-keyhole"></i><span data-i18n="localOnly">信息仅保留在当前浏览器中，不会上传。</span></p>
-          </form>
+              <label class="city-field"><span data-i18n="birthPlace">出生地点</span>
+                <div class="input-wrap"><i data-lucide="map-pin"></i><input name="birthCity" type="text" value="Shanghai" required maxlength="80" placeholder="City / 城市" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggest" /></div>
+                <ul id="city-suggest" class="city-suggest hidden" role="listbox"></ul>
+              </label>
+              <button class="text-button manual-toggle" type="button" data-action="toggle-manual"><span data-i18n="manualPlace">改为手动输入经纬度与时区</span></button>
+              <div id="manual-place" class="manual-place hidden">
+                <div class="form-row">
+                  <label><span data-i18n="latitude">纬度</span><div class="input-wrap"><input name="latitude" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" disabled /></div></label>
+                  <label><span data-i18n="longitude">经度</span><div class="input-wrap"><input name="longitude" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" disabled /></div></label>
+                </div>
+                <label><span data-i18n="timezone">时区</span><div class="input-wrap"><input name="timezone" type="text" list="tz-list" placeholder="Europe/London" autocomplete="off" disabled /></div></label>
+                <datalist id="tz-list"></datalist>
+              </div>
+              <button class="primary-button enter-button" type="submit"><span data-i18n="readChart">推算四柱</span><i data-lucide="arrow-up-right"></i></button>
+              <div class="entry-note"><i data-lucide="sparkles"></i><span data-i18n="demoNotice">本地推算 · 无需注册 · 不会上传</span></div>
+              <div class="entry-divider"></div>
+              <p class="privacy-note"><i data-lucide="lock-keyhole"></i><span data-i18n="localOnly">信息仅保留在当前浏览器中，不会上传。</span></p>
+            </form>
+            <div id="pillars-result" class="pillars-result hidden"></div>
+          </div>
         </div>
         <footer class="landing-footer"><span>DAORA © 2026</span><span data-i18n="footerMantra">Less noise. More presence.</span><span data-i18n="spiritualDisclaimer">仅供自我探索与文化体验，非专业建议</span></footer>
       </section>
@@ -69,7 +73,7 @@
           <a class="brand" href="#" data-action="home" aria-label="DAORA home"><span class="brand-seal small">道</span><span><b>DAORA</b><small data-i18n="miniDojo">我的迷你道场</small></span></a>
           <div class="room-welcome"><span class="status-dot"></span><span data-i18n="roomGreeting">晚上好，欢迎回来</span><span class="welcome-separator">/</span><span id="room-date">静夜 · 21:08</span></div>
           <div class="header-actions">
-            <div class="energy-chip" title="Demo energy reading"><span class="energy-mini-ring">78<small>%</small></span><span><small data-i18n="currentEnergy">当下能量</small><b data-i18n="energyCalm">平和 · 木</b></span></div>
+            <div class="energy-chip" id="element-chip" title="Five-element count from the four pillars"><span class="energy-mini-ring" id="element-mark">木</span><span><small data-i18n="dominantLabel">命盘五行</small><b id="element-name">木</b></span></div>
             <button class="coin-chip" data-panel="coins" aria-label="128 demo energy tokens"><i data-lucide="circle-dollar-sign"></i><b id="coin-count">128</b></button>
             <button class="icon-button language-room" data-action="language" aria-label="Switch language"><span class="lang-short">EN</span></button>
             <button class="icon-button" data-action="sound" aria-label="Enable ambient sound" aria-pressed="false"><i data-lucide="volume-x"></i></button>
@@ -110,8 +114,17 @@
           <button class="nav-item" data-nav="records"><i data-lucide="book-open"></i><span data-i18n="navRecords">记录</span><span id="record-badge" class="nav-badge">3</span></button>
           <button class="nav-item" data-nav="about"><i data-lucide="circle-help"></i><span data-i18n="navAbout">关于</span></button>
         </nav>
-        <div class="demo-corner">DEMO · v1.0</div>
+        <aside id="journey-hud" class="journey-hud hidden">
+          <span class="eyebrow" data-i18n="journeyKicker">INNER SELF JOURNEY</span>
+          <h2 data-i18n="journeyTitle">内在旅程</h2>
+          <p data-i18n="journeyLead">沿这条缓缓升起的路，记下你如何一点点变得更靠近自己。</p>
+          <ol id="journey-list" class="journey-list"></ol>
+          <button class="secondary-button" type="button" data-action="add-milestone" data-i18n="journeyAdd">添加里程碑</button>
+          <button class="primary-button" type="button" data-action="leave-journey"><span data-i18n="journeyBack">返回静室</span><i data-lucide="arrow-right"></i></button>
+        </aside>
+        <div class="demo-corner">DAORA · v1.2</div>
       </section>
+      <div id="passage" class="passage" aria-hidden="true"><span>内在旅程</span></div>
 
       <div id="panel-backdrop" class="panel-backdrop hidden" data-action="close-panel"></div>
       <aside id="detail-panel" class="detail-panel hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title"></aside>

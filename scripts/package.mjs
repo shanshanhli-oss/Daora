@@ -10,8 +10,8 @@ const base=[
  'daora-standalone.html',
 ];
 for(const folder of ['src','scripts','tests','public'])for(const file of await readdir(path.join(root,folder),{recursive:true,withFileTypes:true}))if(file.isFile())base.push(path.relative(root,path.join(file.parentPath,file.name)));
-const screenshots=(await readdir(path.join(root,'screenshots'))).filter(name=>/^journey-(landing|room|portals-detail|panel|walk|mobile)\.png$/.test(name));
-if(screenshots.length!==6)throw Error(`Expected six accepted journey screenshots, got ${screenshots.length}`);
+const screenshots=(await readdir(path.join(root,'screenshots'))).filter(name=>/^(welcome|pillars|wall-door|inner-journey)\.png$/.test(name));
+if(screenshots.length!==4)throw Error(`Expected four v1.2 screenshots, got ${screenshots.length}`);
 await rm(path.join(out,'source'),{recursive:true,force:true});
 await mkdir(path.join(out,'source','daora'),{recursive:true});
 for(const relative of base){
@@ -32,8 +32,8 @@ with ZipFile(archive,'w',ZIP_DEFLATED,compresslevel=9) as z:
  for p in files:z.write(p,'daora/'+str(p.relative_to(base)))
 with ZipFile(archive) as z:
  assert z.testzip() is None
- names=z.namelist();assert 'daora/src/journey-memory.js' in names;assert 'daora/tests/journey-smoke.mjs' in names;assert 'daora/daora-standalone.html' in names
+ names=z.namelist();assert 'daora/src/bazi.js' in names;assert 'daora/src/inner-journey.js' in names;assert 'daora/tests/journey-smoke.mjs' in names;assert 'daora/daora-standalone.html' in names
  print(f'ZIP verified: {len(names)} files; CRC all valid; {archive.stat().st_size:,} bytes')
-manifest={'version':'1.1.0','product':'DAORA · Journey Memory','utc':'2026-11-06T16:00:00Z (verified on 6 November 2026)','offline_html_sha256':hashlib.sha256((out/'DAORA.html').read_bytes()).hexdigest(),'zip_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'zip_files':len(files),'zip_bytes':archive.stat().st_size,'screenshot_count':6,'source_included':True,'external_deploy':False}
+manifest={'version':'1.2.0','product':'DAORA · Inner Self Journey','utc':'2026-11-06T18:00:00Z (verified on 6 November 2026)','offline_html_sha256':hashlib.sha256((out/'DAORA.html').read_bytes()).hexdigest(),'zip_sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'zip_files':len(files),'zip_bytes':archive.stat().st_size,'screenshot_count':4,'source_included':True,'external_deploy':False}
 (out/'MANIFEST.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+'\\n')
 print(json.dumps(manifest,ensure_ascii=False))`],{cwd:root,stdio:'inherit'});
