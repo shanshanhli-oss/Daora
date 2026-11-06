@@ -5,6 +5,8 @@
 
 Built with **Vite + vanilla JavaScript + Three.js**. The room, textures, calligraphy, journey screens, bagua floor, city view, and ambient audio are all generated locally. Birth time and the Four Pillars are calculated in the browser with `lunar-javascript` and IANA timezone data. No remote models, API keys, accounts, cloud storage, or paid services are needed. Static room detail is batched by material while the wall door, hotspots and animated props retain their live hierarchies.
 
+**Live site:** [https://shanshanhli-oss.github.io/Daora/](https://shanshanhli-oss.github.io/Daora/)
+
 ## Run it — three options
 
 ### Option 1: development in Cursor (recommended)
@@ -48,9 +50,16 @@ npm run preview
 
 - `dist/index.html` is the modular production output.
 - `npm run preview` serves it at **http://localhost:4173**.
-- Deploy the whole `dist/` folder to any static host.
 - `npm run build:all` creates both the ordinary build and standalone file.
-- No server environment variables are required.
+- A local build uses a relative asset base, so preview does not need a subpath.
+
+### GitHub Pages
+
+Every push to `main` runs [`.github/workflows/pages.yml`](.github/workflows/pages.yml). It installs dependencies, runs `npm run build:pages` with Vite `base` set to `/Daora/`, and deploys `dist/` with `actions/configure-pages` (`enablement: true`), `actions/upload-pages-artifact`, and `actions/deploy-pages`.
+
+The published site is **[https://shanshanhli-oss.github.io/Daora/](https://shanshanhli-oss.github.io/Daora/)**. Built JS and CSS are requested from `/Daora/assets/…`. The 3D room, its canvas textures, and the optional Web Audio ambience are created in the browser and do not fetch extra files. `localStorage` (`daora-sanctuary-v1`) is stored for that Pages origin, separate from a localhost or `file://` copy.
+
+**One setting has to be switched on by hand before the first deploy can succeed.** In the repository, open **Settings → Pages → Build and deployment** and set **Source** to **GitHub Actions**. `enablement: true` only turns Pages on when that step is given a token other than the default `GITHUB_TOKEN` (a personal access token with the `repo` scope, or a GitHub App with `administration:write` and `pages:write`). This workflow uses `GITHUB_TOKEN`, which can upload and deploy once the source is already GitHub Actions, and cannot flip that setting by itself. After it is set, pushes to `main` publish on their own. No extra secrets are required. The repository is public, so Pages does not need a paid plan.
 
 ## v1.2 · Welcome, Four Pillars, Inner Self Journey
 
@@ -130,6 +139,7 @@ tests/smoke.mjs            Automated Chromium workflow checks
 tests/journey-smoke.mjs    Centrepiece, bilingual panel/journal/collision checks
 tests/journey-visual.mjs   Deterministic desktop centrepiece captures
 tests/standalone.mjs       Checks the exact file:// bundle
+.github/workflows/pages.yml  Builds with base /Daora/ and deploys GitHub Pages
 ```
 
 Change furniture layout in `room.js`, shared room textures in `materials.js`, the wall door in `wall-door.js`, the journey in `inner-journey.js`, pillar math in `bazi.js`, bilingual product text in `i18n.js`, and journal panels in `main.js`.
@@ -170,4 +180,4 @@ This path is inside the shared agent computer. To edit it on a personal computer
 - `screenshots/journey-*.png`: six fresh centre/portal/panel/walk/mobile images.
 - `CHANGELOG.md`: scope and product boundaries.
 
-Nothing is deployed or published. The running local production preview is available at **http://localhost:4173** on this box for this session.
+The live site is published from `main` to **[https://shanshanhli-oss.github.io/Daora/](https://shanshanhli-oss.github.io/Daora/)** once **Settings → Pages → Source** is **GitHub Actions**. A local production preview is still `npm run preview` at **http://localhost:4173**.
