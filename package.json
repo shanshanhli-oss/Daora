@@ -1,0 +1,34 @@
+{
+  "name": "daora-sanctuary",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DAORA · 我的迷你道场 — an interactive 3D sanctuary with a swirling Journey Memory centrepiece.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:ui": "node tests/smoke.mjs",
+    "build:file": "node scripts/standalone.mjs",
+    "build:all": "npm run build && npm run build:file",
+    "test:standalone": "node tests/standalone.mjs",
+    "screenshots": "node tests/capture.mjs",
+    "journey:screenshots": "node tests/journey-visual.mjs",
+    "journey:test": "node tests/journey-smoke.mjs",
+    "test:all": "npm run journey:test && npm run test:ui && npm run test:standalone",
+    "verify:release": "npm run build:all && npm run test:all",
+    "package:handoff": "node scripts/package.mjs"
+  },
+  "dependencies": {
+    "lucide": "^0.468.0",
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright": "^1.65.0",
+    "vite": "^7.3.7"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}

@@ -1,0 +1,22 @@
+DAORA 1.1 · 我的迷你道场 / A Quiet Sanctuary
+Friday, 6 November 2026 (Europe/London)
+
+FASTEST OPEN
+Double-click DAORA.html in a modern WebGL-capable browser.
+No npm, server, external assets, API key or account is required.
+
+EDIT WITH CURSOR
+Unpack DAORA-Cursor-project.zip. Read daora/README.md.
+Requires Node.js 20.19+ or 22.12+.
+cd daora
+npm install
+npm run dev
+Open http://localhost:5173
+
+The new Journey Memory centrepiece has five white paneled doors,
+ten original procedural memory screens, a reflective-looking phase disc,
+warm light and slow rising particles. Click its glowing 3D marker to open
+旅程记忆 / Journey Memory. Demo milestones and local personal notes remain
+clearly distinguished. The reference QR code/advertising are not included.
+
+No external publish or deployment was made. See TESTING.md for tested limits.
