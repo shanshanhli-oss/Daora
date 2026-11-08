@@ -22,18 +22,18 @@ export class SanctuaryScene {
     this.renderer.setSize(innerWidth,innerHeight);
     this.renderer.shadowMap.enabled=true;this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.renderer.outputColorSpace=THREE.SRGBColorSpace;
-    this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.0;
+    this.renderer.toneMapping=THREE.ACESFilmicToneMapping;this.renderer.toneMappingExposure=1.12;
     this.renderer.domElement.setAttribute('aria-label','DAORA interactive 3D sanctuary. Drag to rotate, scroll to zoom, or select the floating hotspots.');
     this.renderer.domElement.setAttribute('role','img');this.renderer.domElement.tabIndex=0;container.append(this.renderer.domElement);
     const pmrem=new THREE.PMREMGenerator(this.renderer);
     const roomEnvironment=new RoomEnvironment();
     this.environmentTarget=pmrem.fromScene(roomEnvironment,.035);
-    this.scene.environment=this.environmentTarget.texture;this.scene.environmentIntensity=.24;
+    this.scene.environment=this.environmentTarget.texture;this.scene.environmentIntensity=.32;
     roomEnvironment.dispose();pmrem.dispose();
     this.controls=new OrbitControls(this.camera,this.renderer.domElement);
     this.controls.enableDamping=true;this.controls.dampingFactor=.055;this.controls.rotateSpeed=.36;this.controls.zoomSpeed=.64;this.controls.panSpeed=.4;
     this.controls.minDistance=4.35;this.controls.maxDistance=21;
-    this.controls.minPolarAngle=.36;this.controls.maxPolarAngle=Math.PI*.47;
+    this.controls.minPolarAngle=.44;this.controls.maxPolarAngle=Math.PI*.47;
     this.controls.minAzimuthAngle=-.76;this.controls.maxAzimuthAngle=1.12;
     this.controls.enablePan=false;this.controls.target.set(0,1.05,-.4);
     this.room=new DojoRoom(this.scene,this.renderer);
@@ -54,7 +54,7 @@ export class SanctuaryScene {
   setLandingCamera(immediate=false) {
     this.mode='landing';this.room.setHotspotsVisible(false);
     this.controls.minDistance=4.35;this.controls.maxDistance=21;
-    this.controls.minPolarAngle=.36;this.controls.maxPolarAngle=Math.PI*.47;
+    this.controls.minPolarAngle=.44;this.controls.maxPolarAngle=Math.PI*.47;
     this.controls.minAzimuthAngle=-.76;this.controls.maxAzimuthAngle=1.12;
     const mobile=innerWidth<700;
     const position=mobile?new THREE.Vector3(12,8,13):new THREE.Vector3(11.8,7.35,12.1);
@@ -70,7 +70,7 @@ export class SanctuaryScene {
     const target=new THREE.Vector3(-.12,1.86,-.42);
     const position=mobile?new THREE.Vector3(11.0,7.3,15.0):new THREE.Vector3(10.9,6.50,13.5);
     this.controls.minDistance=4.35;this.controls.maxDistance=21;
-    this.controls.minPolarAngle=.36;this.controls.maxPolarAngle=Math.PI*.47;
+    this.controls.minPolarAngle=.44;this.controls.maxPolarAngle=Math.PI*.47;
     this.controls.minAzimuthAngle=-.76;this.controls.maxAzimuthAngle=1.12;
     this.camera.fov=mobile?56:44;this.camera.updateProjectionMatrix();
     if(immediate){this.camera.position.copy(position);this.controls.target.copy(target);this.controls.update();}
