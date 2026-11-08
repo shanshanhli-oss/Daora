@@ -1,4 +1,8 @@
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vite';
+
+const root = fileURLToPath(new URL('.', import.meta.url));
 
 /** Project site: https://shanshanhli-oss.github.io/Daora/ */
 const githubPagesBase = '/Daora/';
@@ -11,6 +15,10 @@ export default defineConfig({
     target: 'es2022',
     chunkSizeWarningLimit: 2800,
     rollupOptions: {
+      input: {
+        main: resolve(root, 'index.html'),
+        sanctuary: resolve(root, 'sanctuary.html'),
+      },
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/three')) return 'three';

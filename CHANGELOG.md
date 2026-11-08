@@ -1,3 +1,11 @@
+# DAORA landing — black and gold
+
+- The public entry is `index.html`. **开始起盘** and the 命盘 zone open `sanctuary.html`, the 起盘 flow: place cascade, 八字 and 紫微, the tunnel, and the five-element room.
+- Hero: a cursor-responsive gold taiji and compass. Four schools, three steps, and a 3D room of four zones.
+- Zone 1 casts a traditional six-line figure: three coins, six tosses, bottom-up, moving lines, changed hexagram. A lot can also be drawn from the sixty-four. Glosses are original and local. Full classical line texts are not in this page yet.
+- Zones for 风水 and 通灵 are marked as not yet open.
+- Interest in a master is stored only in the browser.
+
 # DAORA prototype v1.3 — 起盘
 
 - Birth place is a worldwide offline cascade: country, then province or state when the country has one, then city. Places come from GeoNames cities15000 (CC-BY 4.0) with the recorded IANA timezone, latitude and longitude. A country with no state tier skips that step. Manual coordinates still require an explicit timezone.

@@ -5,7 +5,7 @@ const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleF
 const errors=[];
 page.on('pageerror',error=>errors.push(error.message));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
-await page.goto('http://127.0.0.1:5173',{waitUntil:'networkidle',timeout:60000});
+await page.goto('http://127.0.0.1:5173/sanctuary.html',{waitUntil:'networkidle',timeout:60000});
 await page.waitForSelector('#landing:not(.hidden)',{timeout:60000});
 await page.waitForTimeout(2500);
 await page.screenshot({path:'screenshots/01-landing-first.png'});

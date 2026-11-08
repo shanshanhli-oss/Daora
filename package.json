@@ -17,8 +17,11 @@
     "journey:screenshots": "node tests/journey-visual.mjs",
     "journey:test": "node tests/journey-smoke.mjs",
     "test:bazi": "node --test tests/bazi.test.mjs tests/strength.test.mjs tests/ziwei.test.mjs tests/geo.test.mjs",
+    "test:landing-static": "node --test tests/landing.test.mjs",
+    "test:landing": "node tests/landing-smoke.mjs",
+    "landing:screenshots": "node tests/landing-visual.mjs",
     "qipan:screenshots": "node tests/qipan-visual.mjs",
-    "test:all": "npm run test:bazi && npm run journey:test && npm run test:ui && npm run test:standalone",
+    "test:all": "npm run test:bazi && npm run test:landing-static && npm run journey:test && npm run test:ui && npm run test:standalone && npm run test:landing",
     "verify:release": "npm run build:all && npm run test:all",
     "package:handoff": "node scripts/package.mjs"
   },

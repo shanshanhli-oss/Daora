@@ -3,7 +3,9 @@ import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import { chooseLondon } from './place.mjs';
 
-const base = process.env.TEST_URL || 'http://127.0.0.1:4173';
+const root = process.env.TEST_URL || 'http://127.0.0.1:4173';
+const base = root.endsWith('/') ? root : `${root}/`;
+const pageUrl = new URL('sanctuary.html', base).href;
 await mkdir('screenshots', { recursive: true });
 const browser = await chromium.launch({
   headless: true,
@@ -37,7 +39,7 @@ try {
     document.querySelector('#toast')?.classList.remove('visible');
   });
 
-  await page.goto(base, { waitUntil: 'networkidle', timeout: 60000 });
+  await page.goto(pageUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await page.waitForSelector('#landing:not(.hidden)');
   await page.waitForTimeout(400);
   await pin();
@@ -103,7 +105,7 @@ try {
   const mobile = await browser.newPage({ viewport: { width: 360, height: 800 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   const mobileErrors = [];
   mobile.on('pageerror', (error) => mobileErrors.push(error.message));
-  await mobile.goto(base, { waitUntil: 'networkidle', timeout: 60000 });
+  await mobile.goto(pageUrl, { waitUntil: 'networkidle', timeout: 60000 });
   await mobile.waitForSelector('#landing:not(.hidden)');
   await mobile.locator('[name="birthDate"]').fill('1998-06-18');
   await mobile.locator('[name="birthTime"]').fill('07:30');

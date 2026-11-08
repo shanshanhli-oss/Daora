@@ -2,7 +2,7 @@ import {chromium} from 'playwright';
 const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto('http://127.0.0.1:5173',{waitUntil:'networkidle'});
+await page.goto('http://127.0.0.1:5173/sanctuary.html',{waitUntil:'networkidle'});
 await page.waitForSelector('#landing:not(.hidden)');
 await page.evaluate(()=>{window.daora.enterRoom();window.daora.getScene().setRoomCamera(true);});
 await page.waitForTimeout(1500);
@@ -17,7 +17,7 @@ await page.evaluate(()=>window.daora.startBreath());await page.waitForTimeout(50
 await browser.close();
 const mobileBrowser=await chromium.launch({headless:true,executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 const mobile=await mobileBrowser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
-await mobile.goto('http://127.0.0.1:5173',{waitUntil:'networkidle'});await mobile.waitForSelector('#landing:not(.hidden)');await mobile.screenshot({path:'screenshots/mobile-landing-first.png',fullPage:true});
+await mobile.goto('http://127.0.0.1:5173/sanctuary.html',{waitUntil:'networkidle'});await mobile.waitForSelector('#landing:not(.hidden)');await mobile.screenshot({path:'screenshots/mobile-landing-first.png',fullPage:true});
 await mobile.locator('#birth-form button[type="submit"]').click();await mobile.locator('[data-action="confirm-entry"]').click();await mobile.waitForTimeout(3000);await mobile.screenshot({path:'screenshots/mobile-room-first.png'});
 console.log('errors',errors);console.log('mobile overflow',await mobile.evaluate(()=>({width:innerWidth,scrollWidth:document.documentElement.scrollWidth})));
 await mobileBrowser.close();

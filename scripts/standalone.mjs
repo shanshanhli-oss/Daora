@@ -14,7 +14,7 @@ await build({
   legalComments:'inline',
   outfile,
 });
-let html=await fs.readFile('index.html','utf8');
+let html=await fs.readFile('sanctuary.html','utf8');
 const script=await fs.readFile(outfile,'utf8');
 // Split the document from its native module, which cannot otherwise load through file://.
 html=html.replace('<script type="module" src="/src/main.js"></script>',()=>`<script>${script.replaceAll('</script','<\\/script')}</script>`);

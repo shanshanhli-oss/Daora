@@ -2,13 +2,14 @@ import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { chooseLondon } from './place.mjs';
 const base=process.env.TEST_URL||'http://127.0.0.1:4173';
-console.log('[Journey] scene URL',base);
+const pageUrl=new URL('sanctuary.html', base.endsWith('/')?base:`${base}/`).href;
+console.log('[Journey] scene URL',pageUrl);
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
  page.setDefaultTimeout(45000);
  const errors=[],requests=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});page.on('request',r=>requests.push(r.url()));
- await page.goto(base,{waitUntil:'networkidle',timeout:60000});await page.waitForSelector('#landing:not(.hidden)');
+ await page.goto(pageUrl,{waitUntil:'networkidle',timeout:60000});await page.waitForSelector('#landing:not(.hidden)');
  assert.match(await page.locator('#landing-title').innerText(),/这张签名，叫八字/);
  await page.locator('[name="birthDate"]').fill('1998-06-18');
  await page.locator('[name="birthTime"]').fill('07:30');

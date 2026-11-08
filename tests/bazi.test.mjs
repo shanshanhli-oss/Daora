@@ -7,7 +7,7 @@ import { cities, findCity, searchCities } from '../src/cities.js';
 const WELCOME = '你出生的那一刻，星辰的位置、大地的湿度、风的走向、你的第一声啼哭，都在天地之间留下了一张唯一的签名。这张签名，叫八字。它不是锁，不是镣铐，不是判决书，它是你的出场设置，是你在这个世界上只能是你而不能是别人的那个东西，接受这件事情，比改变任何事情都更需要勇气。';
 
 test('welcome page contains the oath exactly', () => {
-  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../sanctuary.html', import.meta.url), 'utf8');
   assert.equal(html.includes(WELCOME), true);
 });
 

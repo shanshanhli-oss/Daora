@@ -7,6 +7,8 @@ Built with **Vite + vanilla JavaScript + Three.js**. The room, textures, calligr
 
 **Live site:** [https://shanshanhli-oss.github.io/Daora/](https://shanshanhli-oss.github.io/Daora/)
 
+The public entry is a black-and-gold landing page. **开始起盘 / Begin Reading**, and the 命盘 zone, open `sanctuary.html`: the 起盘 flow, with a place cascade, 八字 and 紫微 charts, a tunnel, and the five-element room.
+
 ## Run it — three options
 
 ### Option 1: development in Cursor (recommended)

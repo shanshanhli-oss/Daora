@@ -1,7 +1,8 @@
 import {chromium} from 'playwright';
 import {mkdir} from 'node:fs/promises';
 import { chooseLondon } from './place.mjs';
-const base=process.env.TEST_URL||'http://127.0.0.1:4173';
+const root=process.env.TEST_URL||'http://127.0.0.1:4173';
+const base=new URL('sanctuary.html', root.endsWith('/')?root:`${root}/`).href;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 await mkdir('screenshots',{recursive:true});
 try {
