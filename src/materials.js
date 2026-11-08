@@ -22,7 +22,7 @@ function canvasTexture(width, height, draw, repeat = [1, 1]) {
   return texture;
 }
 
-function speckle(context, width, height, count, light, dark, random) {
+export function speckle(context, width, height, count, light, dark, random) {
   for (let i = 0; i < count; i++) {
     const alpha = 0.015 + random() * 0.045;
     context.fillStyle = (i % 2 ? light : dark).replace('ALPHA', alpha.toFixed(3));
@@ -55,7 +55,7 @@ export function createMaterials(renderer) {
 
   const plaster = canvasTexture(512, 512, (ctx, w, h) => {
     const random = seededRandom(234);
-    ctx.fillStyle = '#5c343d'; ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = '#684049'; ctx.fillRect(0, 0, w, h);
     speckle(ctx, w, h, 17000, 'rgba(244,209,186,ALPHA)', 'rgba(20,4,10,ALPHA)', random);
     for (let i = 0; i < 50; i++) {
       ctx.strokeStyle = 'rgba(240,200,170,.018)'; ctx.lineWidth = 10 + random() * 28;
@@ -163,10 +163,10 @@ export function createMaterials(renderer) {
   }); smoke.wrapS=smoke.wrapT=THREE.ClampToEdgeWrapping;
 
   const materials = {
-    wall: new THREE.MeshStandardMaterial({ color: 0x88757a, map: plaster, roughness: .92, bumpMap: plaster, bumpScale: .035 }),
+    wall: new THREE.MeshStandardMaterial({ color: 0x9c888c, map: plaster, roughness: .92, bumpMap: plaster, bumpScale: .035 }),
     wood: new THREE.MeshStandardMaterial({ color: 0x917260, map: wood, roughness: .55, bumpMap: wood, bumpScale: .035 }),
     darkWood: new THREE.MeshStandardMaterial({ color: 0x4b3631, map: wood, roughness: .58, bumpMap: wood, bumpScale: .025 }),
-    lacquer: new THREE.MeshPhysicalMaterial({ color: 0x27191c, map: wood, roughness: .31, clearcoat: .35, clearcoatRoughness: .2 }),
+    lacquer: new THREE.MeshPhysicalMaterial({ color: 0x312228, map: wood, roughness: .31, clearcoat: .35, clearcoatRoughness: .2 }),
     brass: new THREE.MeshStandardMaterial({ color: 0xb19356, metalness: .75, roughness: .33 }),
     agedBrass: new THREE.MeshStandardMaterial({ color: 0x80653d, metalness: .7, roughness: .45 }),
     gold: new THREE.MeshStandardMaterial({ color: 0xd1b26b, metalness: .78, roughness: .25 }),
@@ -181,7 +181,7 @@ export function createMaterials(renderer) {
     blackCeramic: new THREE.MeshPhysicalMaterial({ color: 0x242323, roughness: .28, clearcoat: .4 }),
     paper: new THREE.MeshStandardMaterial({ color: 0xf1dab1, map: paper, roughness: .9, side: THREE.DoubleSide }),
     city: new THREE.MeshBasicMaterial({ map: city, toneMapped: false }),
-    lantern: new THREE.MeshStandardMaterial({ map: lantern, color: 0xffd99e, emissive: 0xf3a64f, emissiveIntensity: 1.4, roughness: .88, side: THREE.DoubleSide }),
+    lantern: new THREE.MeshStandardMaterial({ map: lantern, color: 0xffd99e, emissive: 0xf6ad55, emissiveIntensity: 1.75, roughness: .88, side: THREE.DoubleSide }),
     windowGlass: new THREE.MeshPhysicalMaterial({ color: 0x8ca5ae, transparent: true, opacity: .12, roughness: .16, metalness: .05, depthWrite: false }),
     leaf: new THREE.MeshStandardMaterial({ color: 0x3f5a42, roughness: .8, side: THREE.DoubleSide }),
     leafLight: new THREE.MeshStandardMaterial({ color: 0x617253, roughness: .8, side: THREE.DoubleSide }),

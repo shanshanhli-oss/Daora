@@ -56,11 +56,11 @@ const SEASON = {
 export const STRENGTH_RULE_ID = 'wuxing-strength-v1';
 
 export const ELEMENT_THEMES = {
-  金: { fog: 0x171a22, background: 0x12141a, hemi: 0xd5d3e0, key: 0xf6f1e7, fill: 0xb9c3d4, fillIntensity: 1.55, warm: 0xe7d7b8, exposure: 1.05, accent: '#e4dcc8' },
-  木: { fog: 0x102016, background: 0x0e1812, hemi: 0x8fb892, key: 0xf3e6c4, fill: 0x3f8a58, fillIntensity: 1.65, warm: 0xc6e08a, exposure: 1.02, accent: '#b7c4a4' },
-  水: { fog: 0x0c1826, background: 0x0a141e, hemi: 0x8eb4d4, key: 0xd7eaf8, fill: 0x2f6ea0, fillIntensity: 1.75, warm: 0x9ec4e0, exposure: 0.98, accent: '#9eb4c6' },
-  火: { fog: 0x26140f, background: 0x1c100d, hemi: 0xe7a090, key: 0xffc09a, fill: 0xc24b32, fillIntensity: 1.2, warm: 0xff7a3c, exposure: 1.1, accent: '#e7a088' },
-  土: { fog: 0x23180f, background: 0x1a140e, hemi: 0xd2b48a, key: 0xf0d0a0, fill: 0xa67c45, fillIntensity: 1.3, warm: 0xe09a55, exposure: 1.05, accent: '#d4bc90' },
+  金: { fog: 0x1e212b, background: 0x181b23, hemi: 0xd5d3e0, key: 0xf6f1e7, fill: 0xb9c3d4, fillIntensity: 1.55, warm: 0xe7d7b8, exposure: 1.18, accent: '#e4dcc8' },
+  木: { fog: 0x16251b, background: 0x131e16, hemi: 0x8fb892, key: 0xf3e6c4, fill: 0x3f8a58, fillIntensity: 1.65, warm: 0xc6e08a, exposure: 1.15, accent: '#b7c4a4' },
+  水: { fog: 0x13202f, background: 0x101a26, hemi: 0x8eb4d4, key: 0xd7eaf8, fill: 0x2f6ea0, fillIntensity: 1.75, warm: 0x9ec4e0, exposure: 1.12, accent: '#9eb4c6' },
+  火: { fog: 0x2d1913, background: 0x231411, hemi: 0xe7a090, key: 0xffc09a, fill: 0xc24b32, fillIntensity: 1.2, warm: 0xff7a3c, exposure: 1.22, accent: '#e7a088' },
+  土: { fog: 0x2a1e14, background: 0x211910, hemi: 0xd2b48a, key: 0xf0d0a0, fill: 0xa67c45, fillIntensity: 1.3, warm: 0xe09a55, exposure: 1.17, accent: '#d4bc90' },
 };
 
 export function isValidTimeZone(timeZone) {
