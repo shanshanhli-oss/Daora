@@ -23,6 +23,7 @@
     "landing:screenshots": "node tests/landing-visual.mjs",
     "qipan:screenshots": "node tests/qipan-visual.mjs",
     "v2:screenshots": "node tests/v2-visual.mjs",
+    "test:yijing": "xvfb-run -a node tests/yijing-visual.mjs",
     "test:all": "npm run test:bazi && npm run test:v2 && npm run test:landing-static && npm run journey:test && npm run test:ui && npm run test:standalone && npm run test:landing",
     "verify:release": "npm run build:all && npm run test:all",
     "package:handoff": "node scripts/package.mjs"
