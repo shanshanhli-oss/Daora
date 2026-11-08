@@ -14,7 +14,7 @@ export class DojoRoom {
     this.animated=[];this.lanterns=[];this.hotspotData=[];this.clickables=[];
     this.colliders=[];this.candleFlames=[];this.leaves=[];
     this.buildArchitecture();this.buildWindow();this.buildWallArt();this.buildMeditation();
-    this.buildSofa();this.buildStudy();this.buildBookshelf();this.buildTeaCorner();this.buildDetails();this.buildAtmosphere();
+    this.buildSofa();this.buildStudy();this.buildBookshelf();this.buildTeaCorner();this.buildDetails();this.buildChartObjects();this.buildAtmosphere();
     this.addLighting();
     // Static merging is opt-in during profiling; animated hierarchy is the reliable default.
     // See PERFORMANCE.md for the scene budget.
@@ -508,6 +508,48 @@ export class DojoRoom {
     }
     const orbLight=new THREE.PointLight(0xd0a4a0,2.1,2.4,2);orbLight.position.set(-3.87,1.65,-3.59);this.scene.add(orbLight);
     this.lights={hemi,key,fill,warm,warm2,warm3,windowGlow,orbLight};
+  }
+
+  /** Two chart objects. The glowing marker is the click target; the mesh is the thing you see. */
+  buildChartObjects() {
+    const m=this.m;
+    const bazi=this.region('BaZi calendar',[ -2.05, 0, -0.15 ]);
+    box(bazi,m.darkWood,[.72,.08,.48],[0,.78,0],.02);
+    for (const x of [-.28,.28]) for (const z of [-.16,.16]) box(bazi,m.wood,[.06,.74,.06],[x,.38,z],.01);
+    box(bazi,m.paper,[.46,.02,.32],[0,.83,0]);
+    box(bazi,m.ink,[.02,.22,.28],[-.08,.94,.02]);
+    box(bazi,m.ochreLinen,[.18,.012,.26],[.1,.845,.02],.004).rotation.y=.2;
+    rodBetween(bazi,m.wood,[-.05,.86,.16],[.22,.98,.05],.012);
+    cylinder(bazi,m.ink,[.008,.02],.05,[.24,.99,.04],8);
+    this.addHotspot('bazi','八字 · 探索四柱与人生节律','探索四柱与人生节律',[-2.05,1.15,-0.15]);
+    this.collider(-2.05,-0.15,.9,.7);
+
+    const star=this.region('Ziwei star map',[1.35,0,.85]);
+    cylinder(star,m.darkWood,.46,.08,[0,.82,0]);
+    cylinder(star,m.agedBrass,.38,.02,[0,.87,0]);
+    const disc=mesh(new THREE.CircleGeometry(.34,48),new THREE.MeshStandardMaterial({color:0x1a2438,roughness:.45,metalness:.35}),star,[0,.89,0],[-Math.PI/2,0,0]);
+    disc.name='star-disc';
+    torus(star,m.brass,.3,.008,[0,.9,0],[Math.PI/2,0,0]);
+    torus(star,m.gold,.18,.006,[0,.91,0],[Math.PI/2,.4,0]);
+    const random=seededRandom(71);
+    for (let i=0;i<14;i++) {
+      const angle=random()*Math.PI*2;
+      const radius=.06+random()*.22;
+      sphere(star,i%3?m.gold:m.brass,.012+random()*.01,[Math.cos(angle)*radius,.915,Math.sin(angle)*radius]);
+    }
+    cylinder(star,m.wood,[.07,.08],.78,[0,.4,0]);
+    this.starDisc=disc;
+    this.addHotspot('ziwei','紫微 · 查看十二宫与星曜关系','查看十二宫与星曜关系',[1.35,1.22,.85]);
+    this.collider(1.35,.85,.95,.95);
+  }
+
+  setAccent(color) {
+    const tint=new THREE.Color(color);
+    for (const hotspot of this.hotspotData) {
+      hotspot.ring.material.color.copy(tint);
+      hotspot.halo.material.color.copy(tint);
+    }
+    if (this.starDisc) this.starDisc.material.color.set(0x1a2438).lerp(tint, .45);
   }
 
   addHotspot(id,title,description,position,options={}) {

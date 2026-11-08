@@ -93,7 +93,223 @@ export class SanctuaryScene {
     this.room.lights.warm.color.set(theme.warm);
     this.room.lights.warm2.color.set(theme.warm);
     this.renderer.toneMappingExposure=theme.exposure;
+    this.room.setAccent(theme.accent);
     this.inner.setTheme(element);
+  }
+
+  /**
+   * A centred flight down a ring tunnel into a dark core.
+   * The camera stays on the axis, speeds up, then a gold flash opens the room.
+   * Skip, a safety timer, and reduced motion all land in the room.
+   * hold:true parks a mid-flight frame for a screenshot.
+   */
+  beginTunnel(onDone, {hold=false}={}) {
+    if (this.tunnelRunning) return;
+    if (this.reducedMotion && !hold) {
+      this.mode='room';
+      onDone?.();
+      return;
+    }
+    this.tunnelRunning=true;this.tunnelHold=hold;this.mode='tunnel';
+    this.controls.enabled=false;this.transition=null;this.keys.clear();
+    this.onTunnelDone=onDone;
+    this.savedFog=this.scene.fog;this.savedBackground=this.scene.background;
+    this.savedFov=this.camera.fov;this.savedExposure=this.renderer.toneMappingExposure;
+    this.scene.fog=null;this.scene.background=new THREE.Color(0x070814);
+    this.renderer.toneMappingExposure=1.28;
+    this.room.root.visible=false;
+    this.buildTunnel();
+    this.tunnelStarted=performance.now();
+    this.tunnelFrame=this.tunnelStarted;
+    this.tunnelDuration=3600;
+    this.streakShift=0;
+    this.setTunnelProgress(hold?0.66:0);
+    clearTimeout(this.tunnelSafety);
+    if (!hold) this.tunnelSafety=setTimeout(()=>this.finishTunnel(), 7000);
+  }
+
+  tunnelGlowTexture() {
+    if (this.glowTexture) return this.glowTexture;
+    const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+    const ctx=canvas.getContext('2d');
+    const glow=ctx.createRadialGradient(128,128,10,128,128,128);
+    glow.addColorStop(0,'rgba(0,0,0,0)');
+    glow.addColorStop(.22,'rgba(0,0,0,0)');
+    glow.addColorStop(.34,'rgba(255,246,220,.95)');
+    glow.addColorStop(.5,'rgba(232,196,130,.5)');
+    glow.addColorStop(.72,'rgba(92,108,196,.32)');
+    glow.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=glow;ctx.fillRect(0,0,256,256);
+    this.glowTexture=new THREE.CanvasTexture(canvas);
+    return this.glowTexture;
+  }
+
+  glyphTexture(char) {
+    if (!this.glyphCache) this.glyphCache=new Map();
+    if (this.glyphCache.has(char)) return this.glyphCache.get(char);
+    const canvas=document.createElement('canvas');canvas.width=128;canvas.height=128;
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,128,128);
+    ctx.fillStyle='rgba(244,230,196,.95)';
+    ctx.font='68px "WenQuanYi Micro Hei","Droid Sans Fallback",serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(char,64,68);
+    const texture=new THREE.CanvasTexture(canvas);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    this.glyphCache.set(char,texture);
+    return texture;
+  }
+
+  buildTunnel() {
+    this.disposeTunnelMesh();
+    const mobile=innerWidth<700;
+    const ringCount=mobile?32:52;
+    const streakCount=mobile?380:820;
+    const glyphCount=mobile?16:26;
+    const depth=50;
+    const group=new THREE.Group();group.name='time-tunnel';
+    const gold=new THREE.MeshBasicMaterial({color:0xe7c98a,transparent:true,opacity:.72,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false});
+    const indigo=new THREE.MeshBasicMaterial({color:0x7d93e4,transparent:true,opacity:.5,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,depthWrite:false});
+    const segments=mobile?28:48;
+    for (let i=0;i<ringCount;i++) {
+      const radius=2.15+(i%4)*.08;
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(radius,i%2?.012:.02,6,segments),i%2?indigo:gold);
+      ring.position.z=-i*(depth/ringCount);
+      ring.rotation.z=i*.11;
+      group.add(ring);
+    }
+    const positions=new Float32Array(streakCount*2*3);
+    const colors=new Float32Array(streakCount*2*3);
+    for (let i=0;i<streakCount;i++) {
+      const angle=i*2.399963;
+      const radius=.18+(i%19)/18*2.15;
+      const z=-(i*1.618%depth);
+      const len=.55+(i%6)*.28;
+      const x=Math.cos(angle)*radius,y=Math.sin(angle)*radius;
+      const o=i*6;
+      positions[o]=x;positions[o+1]=y;positions[o+2]=z;
+      positions[o+3]=x;positions[o+4]=y;positions[o+5]=z-len;
+      const tint=i%3? [0.96,0.86,0.62] : [0.62,0.72,0.98];
+      for (let k=0;k<2;k++) {colors[o+k*3]=tint[0];colors[o+k*3+1]=tint[1];colors[o+k*3+2]=tint[2];}
+    }
+    const streakGeo=new THREE.BufferGeometry();
+    streakGeo.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    streakGeo.setAttribute('color',new THREE.BufferAttribute(colors,3));
+    const streaks=new THREE.LineSegments(streakGeo,new THREE.LineBasicMaterial({vertexColors:true,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false}));
+    group.add(streaks);
+    this.tunnelStreaks=streaks;this.streakBase=positions.slice();
+
+    const coreZ=-depth-1.2;
+    const hole=new THREE.Mesh(new THREE.SphereGeometry(1.15,32,24),new THREE.MeshBasicMaterial({color:0x05030c}));
+    hole.position.z=coreZ;hole.renderOrder=3;group.add(hole);
+    const disk=new THREE.Mesh(new THREE.RingGeometry(1.35,2.7,80),new THREE.MeshBasicMaterial({color:0xf2d7a4,side:THREE.DoubleSide,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false}));
+    disk.position.z=coreZ+.12;group.add(disk);
+    const outer=new THREE.Mesh(new THREE.RingGeometry(2.15,3.15,72),new THREE.MeshBasicMaterial({color:0x8496e8,side:THREE.DoubleSide,transparent:true,opacity:.42,blending:THREE.AdditiveBlending,depthWrite:false}));
+    outer.position.z=coreZ+.02;group.add(outer);
+    const vortex=new THREE.Group();vortex.position.z=coreZ;
+    for (let i=0;i<4;i++) {
+      const arm=new THREE.Mesh(new THREE.TorusGeometry(1.15+i*.38,.018,6,64),new THREE.MeshBasicMaterial({color:i%2?0xd8c4ff:0xf6e2b4,transparent:true,opacity:.78,blending:THREE.AdditiveBlending,depthWrite:false}));
+      arm.rotation.x=.42+i*.18;arm.rotation.y=i*.8;vortex.add(arm);
+    }
+    group.add(vortex);this.tunnelVortex=vortex;
+    const glowMap=this.tunnelGlowTexture();
+    const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:glowMap,color:0xffe7b8,transparent:true,opacity:.95,blending:THREE.AdditiveBlending,depthWrite:false}));
+    glow.position.z=coreZ-.4;glow.scale.set(18,18,1);glow.renderOrder=1;group.add(glow);
+    const cool=new THREE.Sprite(new THREE.SpriteMaterial({map:glowMap,color:0x7384dc,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false}));
+    cool.position.z=coreZ-.8;cool.scale.set(28,28,1);cool.renderOrder=0;group.add(cool);
+
+    const glyphs='甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥✦✧';
+    for (let i=0;i<glyphCount;i++) {
+      const char=glyphs[i%glyphs.length];
+      const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:this.glyphTexture(char),transparent:true,opacity:.55,depthWrite:false,color:i%2?0xf3e2c0:0xc5cef5}));
+      const angle=(i/glyphCount)*Math.PI*2;
+      const radius=1.35+(i%3)*.28;
+      sprite.position.set(Math.cos(angle)*radius,Math.sin(angle)*radius,-3-(i/glyphCount)*(depth-6));
+      sprite.scale.set(.55,.55,1);
+      group.add(sprite);
+    }
+    this.scene.add(group);
+    this.tunnel=group;this.tunnelDepth=depth;this.tunnelCoreZ=coreZ;
+  }
+
+  advanceStreaks(rush) {
+    if (!this.tunnelStreaks||!this.streakBase) return;
+    const now=performance.now();
+    const dt=Math.min(.05,(now-(this.tunnelFrame||now))/1000);
+    this.tunnelFrame=now;
+    const depth=this.tunnelDepth||50;
+    this.streakShift=(this.streakShift+dt*(3+rush*32))%depth;
+    const attr=this.tunnelStreaks.geometry.attributes.position;
+    const base=this.streakBase;
+    for (let i=0;i<attr.count;i++) {
+      let z=base[i*3+2]+this.streakShift;
+      if (z>1.2) z-=depth;
+      attr.setXYZ(i,base[i*3],base[i*3+1],z);
+    }
+    attr.needsUpdate=true;
+  }
+
+  setTunnelProgress(amount) {
+    if (!this.tunnel) return;
+    const t=Math.min(1,Math.max(0,amount));
+    this.tunnelProgress=t;
+    const rush=Math.pow(t,2.15);
+    const depth=this.tunnelDepth||50;
+    const z=6.4-rush*(depth-1.5);
+    this.camera.up.set(0,1,0);
+    this.camera.position.set(0,0,z);
+    this.camera.lookAt(0,0,this.tunnelCoreZ??-40);
+    const mobile=innerWidth<700;
+    this.camera.fov=(mobile?70:64)+rush*14;
+    this.camera.updateProjectionMatrix();
+    this.tunnel.rotation.z=rush*.7;
+    if (this.tunnelVortex) this.tunnelVortex.rotation.z=t*9;
+    if (!this.tunnelHold) this.advanceStreaks(rush);
+    const veil=document.getElementById('tunnel-flash');
+    if (veil) veil.style.opacity=String(t<0.86?0:Math.min(1,(t-.86)/.14));
+  }
+
+  finishTunnel() {
+    if (!this.tunnelRunning && this.mode!=='tunnel') return;
+    clearTimeout(this.tunnelSafety);
+    const flashed=this.tunnelProgress>0.5;
+    this.tunnelRunning=false;this.tunnelHold=false;
+    this.disposeTunnelMesh();
+    this.room.root.visible=true;
+    this.scene.fog=this.savedFog||this.scene.fog;
+    this.scene.background=this.savedBackground||this.scene.background;
+    if (Number.isFinite(this.savedFov)) this.camera.fov=this.savedFov;
+    if (Number.isFinite(this.savedExposure)) this.renderer.toneMappingExposure=this.savedExposure;
+    this.camera.updateProjectionMatrix();
+    if (this.element) this.setElementTheme(this.element);
+    const veil=document.getElementById('tunnel-flash');
+    if (veil) {
+      veil.style.transition='none';
+      veil.style.opacity=flashed?'1':'0';
+      if (flashed) requestAnimationFrame(()=>{
+        veil.style.transition='opacity .48s ease';
+        veil.style.opacity='0';
+      });
+    }
+    const done=this.onTunnelDone;this.onTunnelDone=null;
+    this.mode='room';
+    done?.();
+  }
+
+  skipTunnel() { this.finishTunnel(); }
+
+  disposeTunnelMesh() {
+    if (!this.tunnel) return;
+    const materials=new Set();const geometries=new Set();
+    this.tunnel.traverse((object)=>{
+      if (object.geometry) geometries.add(object.geometry);
+      const list=object.material?(Array.isArray(object.material)?object.material:[object.material]):[];
+      list.forEach((material)=>materials.add(material));
+    });
+    geometries.forEach((geometry)=>geometry.dispose());
+    materials.forEach((material)=>material.dispose());
+    this.scene.remove(this.tunnel);
+    this.tunnel=null;this.tunnelStreaks=null;this.tunnelVortex=null;this.streakBase=null;
   }
 
   enterJourney(immediate=false) {
@@ -228,7 +444,7 @@ export class SanctuaryScene {
   }
 
   updateHover() {
-    if(this.mode==='landing'||this.paused||this.passing)return;
+    if(this.mode==='landing'||this.mode==='tunnel'||this.paused||this.passing)return;
     const hit=this.findHit();
     const id=hit?.type==='hotspot'?hit.id:hit?.type==='milestone'?`milestone:${hit.id}`:hit?.type||null;
     if(id===this.hovered)return;
@@ -237,7 +453,7 @@ export class SanctuaryScene {
   }
 
   raycast() {
-    if(this.passing)return;
+    if(this.passing||this.mode==='tunnel')return;
     const hit=this.findHit();if(!hit)return;
     if(hit.type==='door'&&(this.mode==='room'||this.mode==='walk')){this.beginPassage('journey');return;}
     if(hit.type==='return'&&(this.mode==='journey'||this.mode==='journey-walk')){this.beginPassage('room');return;}
@@ -273,6 +489,15 @@ export class SanctuaryScene {
   tick() {
     const delta=Math.min(this.clock.getDelta(),.055);if(document.hidden)return;
     if(!this.reducedMotion)this.elapsed+=delta;
+    if(this.mode==='tunnel'){
+      if(!this.tunnelHold){
+        const amount=Math.min(1,(performance.now()-this.tunnelStarted)/this.tunnelDuration);
+        this.setTunnelProgress(amount);
+        if(amount>=1){this.finishTunnel();return;}
+      } else this.setTunnelProgress(this.tunnelProgress??0.66);
+      this.renderer.render(this.scene,this.camera);
+      return;
+    }
     if(this.transition) {
       const t=this.transition;
       const progress=Math.min(1,(performance.now()-t.started)/t.duration);

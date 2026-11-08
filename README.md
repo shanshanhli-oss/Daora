@@ -61,24 +61,26 @@ The published site is **[https://shanshanhli-oss.github.io/Daora/](https://shans
 
 **One setting has to be switched on by hand before the first deploy can succeed.** In the repository, open **Settings → Pages → Build and deployment** and set **Source** to **GitHub Actions**. `enablement: true` only turns Pages on when that step is given a token other than the default `GITHUB_TOKEN` (a personal access token with the `repo` scope, or a GitHub App with `administration:write` and `pages:write`). This workflow uses `GITHUB_TOKEN`, which can upload and deploy once the source is already GitHub Actions, and cannot flip that setting by itself. After it is set, pushes to `main` publish on their own. No extra secrets are required. The repository is public, so Pages does not need a paid plan.
 
+## v1.3 · 起盘
+
+The welcome oath is unchanged. Birth place is now country → province or state → city, from an offline GeoNames cities15000 extract (CC-BY 4.0) with each city's latitude, longitude and IANA timezone. Countries without a state tier skip that step. Manual coordinates still need a named timezone. Beijing time remains the civil clock for the pillars. True solar time is a separate, optional, one-time correction.
+
+八字 uses `lunar-javascript` (MIT). 紫微 uses `iztro` (MIT). After both charts, the line **探索你的人生旅程** and the **心灵旅程** button fly the camera down a centred, skippable tunnel into a dark core, then flash into the existing room. The suggested room tint follows `wuxing-strength-v1` (stems, hidden stems, and the month branch). 金、木、水、火、土 can be switched by hand. An 八字 desk and a 紫微 star disc each open that chart, with offline guidance and a local practitioner note marked **尚未发送 / 尚未预约**. Nothing in that note is sent.
+
+The back-wall door still opens **内在旅程 / Inner Self Journey**. That door is separate from 心灵旅程. Milestones stay in `localStorage` under `daora-sanctuary-v1`.
+
+Screenshots: `screenshots/qipan-welcome.png`, `screenshots/qipan-cascade.png`, `screenshots/qipan-charts.png`, `screenshots/qipan-tunnel.png`, `screenshots/qipan-room-metal.png`, `screenshots/qipan-room-wood.png`, `screenshots/qipan-room-water.png`, `screenshots/qipan-room-fire.png`, `screenshots/qipan-room-earth.png`, `screenshots/qipan-bazi-space.png`, `screenshots/qipan-ziwei-space.png`, `screenshots/qipan-consult.png`, `screenshots/qipan-mobile.png`.
+
 ## v1.2 · Welcome, Four Pillars, Inner Self Journey
 
-The room centre is calm again: a low bagua disc on the floor. One ivory door sits on the back wall, slightly ajar, with warm light around the frame. Click the door, or walk into it, and a short fade opens **内在旅程 / Inner Self Journey** — a separate space of memory doors and screens along a gentle spiral. There is no QR code and no promotional text.
-
-- The welcome page shows the Chinese oath exactly, plus an English translation when the language is EN.
-- Date, time and place of birth. Search a bundled list of major cities (London, Brighton, Manchester, Edinburgh, Chinese cities, and others), or enter latitude, longitude and an IANA timezone by hand.
-- Local civil time is converted to Beijing time (`Asia/Shanghai`), including historical daylight saving. True solar time is shown as well. The Four Pillars change at 立春 and the 节气, not at midnight on the lunar new year or the Gregorian new year.
-- Element counts come from the eight characters. The strongest element tints the room.
-- Milestones (journal, ritual, reading, note) can be added in the journey and stay in `localStorage` under `daora-sanctuary-v1`. The return door and the **回到房间** button both lead back.
-
-Screenshots: `screenshots/welcome.png`, `screenshots/wall-door.png`, `screenshots/inner-journey.png`, `screenshots/pillars.png`.
+The room centre is a low bagua disc. One ivory door sits on the back wall. Click it, or walk into it, and a short fade opens the inner journey. There is no QR code and no promotional text.
 
 ## What is implemented
 
 ### Arrival
 
 - Welcome page with the BaZi oath, bilingual, over a live 3D room.
-- Birth date, birth time, and a searchable worldwide city, or manual coordinates and timezone.
+- Birth date, birth time, and a country → region → city search over the bundled GeoNames extract, or manual coordinates and timezone.
 - No registration. Inputs stay in local browser storage.
 - Clear prototype and cultural-exploration disclaimer.
 - English / 中文 toggle for core UI, services, about, element explanations, and journals.
@@ -99,7 +101,7 @@ Screenshots: `screenshots/welcome.png`, `screenshots/wall-door.png`, `screenshot
 ### Interaction
 
 - Drag to orbit; scroll or pinch to approach; touch-friendly controls.
-- Nine interactive glowing hotspots: tea ritual, personal elements chart, sofa, orb, and five-element plaques. The wall door is a separate portal, not a floating hotspot.
+- Eleven interactive glowing hotspots: tea ritual, personal elements chart, sofa, orb, five-element plaques, an 八字 desk and a 紫微 star disc. The wall door is a separate portal, not a floating hotspot.
 - Selecting an object smoothly guides the camera and opens a genuinely populated information panel.
 - First-person **W/A/S/D** or arrow-key walk mode with collision boundaries, Shift to move faster, drag to look, **Esc** to return.
 - Reset room view and immersive mode (hide peripheral UI).
