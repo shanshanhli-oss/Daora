@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#171014" />
+    <meta name="description" content="DAORA · 四门静室。一室四门：占卜、命盘、风水、通灵，各通一方。" />
+    <title>DAORA · 四门静室 The Hall</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23271920'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23c7a76b' stroke-width='2'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='27' fill='%23d9c399'%3E道%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="scene" aria-label="可交互的四门静室三维场景"></div>
+      <div class="scene-shade" aria-hidden="true"></div>
+
+      <div id="loading" class="loading-screen">
+        <div class="brand-seal">道</div>
+        <span class="eyebrow">DAORA</span>
+        <div class="loading-line"><span></span></div>
+        <p data-i18n="loading">正在布置静室</p>
+      </div>
+
+      <div id="station-label" class="station-label hidden" role="tooltip"></div>
+
+      <section id="table-ui" class="table-ui hidden" aria-label="Hall controls">
+        <header class="top-bar">
+          <a class="brand" href="./index.html" aria-label="DAORA home">
+            <span class="brand-seal small">道</span>
+            <span><b>DAORA</b><small data-i18n="pageTitle">四门静室</small></span>
+          </a>
+          <div class="top-actions">
+            <button class="ghost-button" data-action="language" aria-label="Switch language"><span id="lang-label">EN</span></button>
+            <button class="ghost-button icon" data-action="sound" aria-label="Toggle sound" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 5 6 9H2v6h4l5 4V5z" />
+                <path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path class="wave" d="M18.4 5.6a9 9 0 0 1 0 12.8" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="table-copy">
+          <span class="eyebrow"><span class="eyebrow-rule"></span><span data-i18n="kicker">FOUR GATES</span></span>
+          <h1 data-i18n="greeting">一室四门，各通一方</h1>
+          <p class="lede" data-i18n="lede">点击案上的器物，走进对应的门。</p>
+        </div>
+
+        <footer class="bottom-bar">
+          <nav class="gate-nav" aria-label="Four domains">
+            <button class="gate-item open" data-gate="divination" type="button">
+              <b data-i18n="gateDivination">占卜</b><small data-i18n="gateDivinationSub">易经 · 摇卦与卦签</small><i class="gate-status" data-i18n="statusOpen">已开放</i>
+            </button>
+            <button class="gate-item" data-gate="chart" type="button">
+              <b data-i18n="gateChart">命盘</b><small data-i18n="gateChartSub">八字 · 紫微</small><i class="gate-status" data-i18n="statusSoon">布置中</i>
+            </button>
+            <button class="gate-item" data-gate="fengshui" type="button">
+              <b data-i18n="gateFengshui">风水</b><small data-i18n="gateFengshuiSub">宅盘 · 方位宜忌</small><i class="gate-status" data-i18n="statusSoon">布置中</i>
+            </button>
+            <button class="gate-item" data-gate="spirit" type="button">
+              <b data-i18n="gateSpirit">通灵</b><small data-i18n="gateSpiritSub">大师 · 咨询预约</small><i class="gate-status" data-i18n="statusSoon">布置中</i>
+            </button>
+          </nav>
+          <p class="hint"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M12 6v4"/></svg><span data-i18n="hintDrag">拖拽换个角度 · 滚轮靠近 · 点击器物进入</span></p>
+          <p class="disclaimer" data-i18n="disclaimer">仅供自我探索与文化体验，非专业建议</p>
+        </footer>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"><span></span></div>
+    </div>
+    <script type="module" src="/src/room/main.js"></script>
+  </body>
+</html>
