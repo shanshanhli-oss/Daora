@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { chooseLondon } from './place.mjs';
 
 const root=process.env.TEST_URL||'http://127.0.0.1:5173';
 const base=new URL('sanctuary.html', root.endsWith('/')?root:`${root}/`).href;
@@ -15,8 +16,7 @@ try {
   assert.equal(await page.locator('#birth-form input[name="latitude"]').count(),1);
   await page.locator('[name="birthDate"]').fill('1998-06-18');
   await page.locator('[name="birthTime"]').fill('07:30');
-  await page.locator('[name="birthCity"]').fill('London');
-  await page.locator('#city-suggest li').first().click();
+  await chooseLondon(page);
   await page.locator('#birth-form button[type="submit"]').click();
   await page.waitForSelector('#pillars-result:not(.hidden)');
   assert.match(await page.locator('#pillars-result').innerText(),/14:30/);
@@ -25,7 +25,7 @@ try {
   await page.waitForTimeout(1700);
   // CPU-only test runner: pin one rendered room, keep real DOM interaction.
   await page.evaluate(()=>window.daora.getScene().renderer.setAnimationLoop(null));
-  assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),9);
+  assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),11);
   assert.equal(await page.evaluate(()=>window.daoraDiagnostics().element),'土');
   assert.ok(await page.locator('#landing').evaluate(el=>el.classList.contains('hidden')));
 
@@ -86,7 +86,7 @@ try {
   await page.locator('[data-action="sound"]').click();
   await page.screenshot({path:'screenshots/smoke-desktop.png'});
   assert.deepEqual(errors,[],'No browser runtime errors');
-  console.log('PASS desktop: pillars → room, 9 hotspots, services, breathing, journal persistence, EN toggle, about, camera reset, WASD movement/Escape, chart, audio; 0 console errors.');
+  console.log('PASS desktop: pillars → room, 11 hotspots, services, breathing, journal persistence, EN toggle, about, camera reset, WASD movement/Escape, chart, audio; 0 console errors.');
   await page.close();
 
   const mobile=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});

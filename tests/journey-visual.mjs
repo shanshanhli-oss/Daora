@@ -1,5 +1,6 @@
 import {chromium} from 'playwright';
 import {mkdir} from 'node:fs/promises';
+import { chooseLondon } from './place.mjs';
 const root=process.env.TEST_URL||'http://127.0.0.1:4173';
 const base=new URL('sanctuary.html', root.endsWith('/')?root:`${root}/`).href;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -16,8 +17,7 @@ try {
  await page.screenshot({path:'screenshots/welcome.png',timeout:60000});
  await page.locator('[name="birthDate"]').fill('1998-06-18');
  await page.locator('[name="birthTime"]').fill('07:30');
- await page.locator('[name="birthCity"]').fill('London');
- await page.locator('#city-suggest li').first().click();
+ await chooseLondon(page);
  await page.locator('#birth-form button[type="submit"]').click();
  await page.waitForSelector('#pillars-result:not(.hidden)');
  await page.screenshot({path:'screenshots/pillars.png',timeout:60000});

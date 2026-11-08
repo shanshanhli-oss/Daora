@@ -1,6 +1,6 @@
 {
   "name": "daora-sanctuary",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "type": "module",
   "description": "DAORA · 我的迷你道场 — a 3D sanctuary with offline BaZi pillars and an Inner Self Journey.",
@@ -16,21 +16,24 @@
     "screenshots": "node tests/capture.mjs",
     "journey:screenshots": "node tests/journey-visual.mjs",
     "journey:test": "node tests/journey-smoke.mjs",
-    "test:bazi": "node --test tests/bazi.test.mjs",
+    "test:bazi": "node --test tests/bazi.test.mjs tests/strength.test.mjs tests/ziwei.test.mjs tests/geo.test.mjs",
     "test:landing-static": "node --test tests/landing.test.mjs",
     "test:landing": "node tests/landing-smoke.mjs",
     "landing:screenshots": "node tests/landing-visual.mjs",
+    "qipan:screenshots": "node tests/qipan-visual.mjs",
     "test:all": "npm run test:bazi && npm run test:landing-static && npm run journey:test && npm run test:ui && npm run test:standalone && npm run test:landing",
     "verify:release": "npm run build:all && npm run test:all",
     "package:handoff": "node scripts/package.mjs"
   },
   "dependencies": {
+    "iztro": "^2.5.7",
     "lucide": "^0.468.0",
     "lunar-javascript": "^1.7.8",
     "three": "^0.180.0"
   },
   "devDependencies": {
     "esbuild": "^0.28.2",
+    "i18n-iso-countries": "^7.14.0",
     "playwright": "^1.65.0",
     "vite": "^7.3.7"
   },

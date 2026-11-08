@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { computeChart } from '../src/bazi.js';
+import { computeChart, resolveZonedTime, zonedWallTimeToUtc } from '../src/bazi.js';
 import { cities, findCity, searchCities } from '../src/cities.js';
 
 const WELCOME = '你出生的那一刻，星辰的位置、大地的湿度、风的走向、你的第一声啼哭，都在天地之间留下了一张唯一的签名。这张签名，叫八字。它不是锁，不是镣铐，不是判决书，它是你的出场设置，是你在这个世界上只能是你而不能是别人的那个东西，接受这件事情，比改变任何事情都更需要勇气。';
@@ -72,6 +72,38 @@ test('known Beijing dates agree with lunar-javascript solar-term pillars', () =>
     const chart = computeChart({ year, month, day, hour, minute, longitude: 116.4, timeZone: 'Asia/Shanghai' });
     assert.deepEqual(chart.pillars, expected, stamp);
   }
+});
+
+test('London spring-forward 2026-03-29 01:30 does not exist', () => {
+  const resolved = resolveZonedTime({ year: 2026, month: 3, day: 29, hour: 1, minute: 30 }, 'Europe/London');
+  assert.equal(resolved.status, 'nonexistent');
+  assert.throws(() => zonedWallTimeToUtc({ year: 2026, month: 3, day: 29, hour: 1, minute: 30 }, 'Europe/London'), (error) => error.code === 'nonexistent');
+});
+
+test('London fall-back 2026-10-25 01:30 is ambiguous by one hour', () => {
+  const resolved = resolveZonedTime({ year: 2026, month: 10, day: 25, hour: 1, minute: 30 }, 'Europe/London');
+  assert.equal(resolved.status, 'ambiguous');
+  const earlier = zonedWallTimeToUtc({ year: 2026, month: 10, day: 25, hour: 1, minute: 30 }, 'Europe/London', 'earlier');
+  const later = zonedWallTimeToUtc({ year: 2026, month: 10, day: 25, hour: 1, minute: 30 }, 'Europe/London', 'later');
+  assert.equal(later.getTime() - earlier.getTime(), 60 * 60 * 1000);
+});
+
+test('true solar correction is applied once, can cross a day, and does not move the UTC instant', () => {
+  // 00:30 BST is 07:30 in Beijing. London is about 120° west of the 120°E
+  // meridian, so one longitude correction lands on the previous civil day.
+  const input = { year: 1998, month: 6, day: 18, hour: 0, minute: 30, longitude: -0.1278, timeZone: 'Europe/London' };
+  const civil = computeChart(input);
+  const solar = computeChart({ ...input, useTrueSolar: true });
+  assert.equal(civil.beijing.label, '1998-06-18 07:30');
+  assert.equal(solar.utc, civil.utc);
+  assert.equal(solar.trueSolar.dayShift, -1);
+  assert.equal(solar.pillarBasis, 'true-solar-v1');
+  assert.equal(solar.pillarClock.day, 17);
+  assert.notEqual(solar.pillars.day, civil.pillars.day);
+  const again = computeChart({ ...input, useTrueSolar: true });
+  assert.equal(again.pillarClock.day, solar.pillarClock.day);
+  assert.equal(again.pillars.hour, solar.pillars.hour);
+  assert.equal(again.trueSolar.dayShift, -1);
 });
 
 test('city gazetteer covers the requested places and resolves uniquely', () => {

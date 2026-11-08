@@ -13,7 +13,7 @@ export default defineConfig({
   base: process.env.VITE_BASE || (process.env.GITHUB_PAGES === 'true' ? githubPagesBase : './'),
   build: {
     target: 'es2022',
-    chunkSizeWarningLimit: 950,
+    chunkSizeWarningLimit: 2800,
     rollupOptions: {
       input: {
         main: resolve(root, 'index.html'),
@@ -22,6 +22,8 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules/three')) return 'three';
+          if (id.includes('places.json')) return 'places';
+          if (id.includes('node_modules/iztro') || id.includes('node_modules/lunar-javascript')) return 'charts';
         },
       },
     },
