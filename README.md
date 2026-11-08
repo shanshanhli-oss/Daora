@@ -65,7 +65,7 @@ The published site is **[https://shanshanhli-oss.github.io/Daora/](https://shans
 
 The welcome oath is unchanged. Birth place is now country → province or state → city, from an offline GeoNames cities15000 extract (CC-BY 4.0) with each city's latitude, longitude and IANA timezone. Countries without a state tier skip that step. Manual coordinates still need a named timezone. Beijing time remains the civil clock for the pillars. True solar time is a separate, optional, one-time correction.
 
-八字 uses `lunar-javascript` (MIT). 紫微 uses `iztro` (MIT). After both charts, the line **探索你的人生旅程** and the **心灵旅程** button open a skippable time tunnel into the existing room. The suggested room tint follows `wuxing-strength-v1` (stems, hidden stems, and the month branch). 金、木、水、火、土 can be switched by hand. An 八字 desk and a 紫微 star disc each open that chart, with offline guidance and a local practitioner note marked **尚未发送 / 尚未预约**. Nothing in that note is sent.
+八字 uses `lunar-javascript` (MIT). 紫微 uses `iztro` (MIT). After both charts, the line **探索你的人生旅程** and the **心灵旅程** button fly the camera down a centred, skippable tunnel into a dark core, then flash into the existing room. The suggested room tint follows `wuxing-strength-v1` (stems, hidden stems, and the month branch). 金、木、水、火、土 can be switched by hand. An 八字 desk and a 紫微 star disc each open that chart, with offline guidance and a local practitioner note marked **尚未发送 / 尚未预约**. Nothing in that note is sent.
 
 The back-wall door still opens **内在旅程 / Inner Self Journey**. That door is separate from 心灵旅程. Milestones stay in `localStorage` under `daora-sanctuary-v1`.
 

@@ -3,7 +3,7 @@
 - Birth place is a worldwide offline cascade: country, then province or state when the country has one, then city. Places come from GeoNames cities15000 (CC-BY 4.0) with the recorded IANA timezone, latitude and longitude. A country with no state tier skips that step. Manual coordinates still require an explicit timezone.
 - Local civil time still becomes Beijing time, including historical daylight saving. True solar time is optional and applied once; the UTC instant stays the same.
 - 八字 stays on `lunar-javascript` (MIT): four pillars, hidden stems, ten gods, NaYin, voids and luck cycles. 紫微 is `iztro` (MIT): twelve palaces, stars, brightness, four transformations, and a decadal or yearly view. 七政四余 and 奇门 are not in this build. No AGPL chart code is included.
-- After the charts, the page shows 探索你的人生旅程 and a 心灵旅程 button. The button plays a skippable time-tunnel into the room. Reduced motion fades instead.
+- After the charts, the page shows 探索你的人生旅程 and a 心灵旅程 button. The button flies the camera down a centred gold-and-indigo tunnel into a dark core, then flashes into the room. It lasts about 3.6 seconds, can be skipped, and reduced motion fades instead.
 - The room's suggested tint is the strongest weighted element (`wuxing-strength-v1`: stems, hidden stems, month-branch season). 金、木、水、火、土 can each be chosen by hand.
 - The room has an 八字 desk and a 紫微 star disc. Each opens that chart, with offline guidance. A local note for a practitioner stays in the browser and is labelled 尚未发送 / 尚未预约.
 - The wall door, inner journey, bilingual UI, mobile layout, standalone HTML and GitHub Pages build remain.

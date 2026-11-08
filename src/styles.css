@@ -505,10 +505,12 @@ html[data-element="earth"] { --gold: #d4bc90; --gold-bright: #f0ddb8; }
 .chart-toolbar { position: absolute; left: 28px; bottom: 36px; display: flex; gap: 8px; z-index: 5; }
 .chart-toolbar button { min-width: 64px; letter-spacing: .2em; }
 .immersive .chart-toolbar { opacity: 0; pointer-events: none; }
-.tunnel { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 16px; padding: 48px; pointer-events: none; background: linear-gradient(transparent, rgba(0,0,0,.25)); }
+.tunnel { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 16px; padding: 48px; pointer-events: none; background: radial-gradient(circle at 50% 46%, transparent 0 18%, rgba(7, 8, 20, .18) 58%, rgba(5, 4, 12, .45) 100%); }
 .tunnel.hidden { display: none; }
-.tunnel p { font-family: var(--serif); letter-spacing: .28em; color: #f3e6cc; }
+.tunnel p, .tunnel button { position: relative; z-index: 1; }
+.tunnel p { font-family: var(--serif); letter-spacing: .28em; color: #f3e6cc; text-shadow: 0 0 18px rgba(80, 90, 160, .8); }
 .tunnel button { pointer-events: auto; border: 1px solid rgba(240, 220, 180, .7); background: rgba(10, 8, 12, .72); color: #f6edd8; padding: 10px 22px; letter-spacing: .2em; cursor: pointer; }
+.tunnel-flash { position: fixed; inset: 0; z-index: 41; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 46%, #fffaf0 0%, #f4ddb2 16%, #2a2858 58%, rgba(7, 6, 16, 0) 78%); }
 .system-space { position: fixed; inset: 24px; z-index: 24; overflow: auto; padding: 28px 32px 40px; background: linear-gradient(160deg, rgba(28, 22, 24, .96), rgba(14, 12, 16, .94)); border: 1px solid rgba(198, 168, 112, .35); color: #f3eadc; }
 .system-space.hidden { display: none; }
 .ziwei-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-areas: "si wu wei shen" "chen . . you" "mao . . xu" "yin chou zi hai"; gap: 6px; margin: 12px 0; }
