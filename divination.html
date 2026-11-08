@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#171014" />
+    <meta name="description" content="DAORA · 占卜桌。一张安静的桌子，一组牌，一次与自己的对话。" />
+    <title>DAORA · 占卜桌 Oracle Table</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23271920'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23c7a76b' stroke-width='2'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='27' fill='%23d9c399'%3E道%3C/text%3E%3C/svg%3E" />
+  </head>
+  <body>
+    <div id="app">
+      <div id="scene" aria-label="可交互的占卜桌三维场景"></div>
+      <div class="scene-shade" aria-hidden="true"></div>
+
+      <div id="loading" class="loading-screen">
+        <div class="brand-seal">道</div>
+        <span class="eyebrow">DAORA</span>
+        <div class="loading-line"><span></span></div>
+        <p data-i18n="loading">正在铺开牌阵</p>
+      </div>
+
+      <section id="table-ui" class="table-ui hidden" aria-label="Oracle table controls">
+        <header class="top-bar">
+          <a class="brand" href="./index.html" aria-label="DAORA home">
+            <span class="brand-seal small">道</span>
+            <span><b>DAORA</b><small data-i18n="pageTitle">占卜桌</small></span>
+          </a>
+          <div class="top-actions">
+            <button class="ghost-button" data-action="language" aria-label="Switch language"><span id="lang-label">EN</span></button>
+            <button class="ghost-button icon" data-action="sound" aria-label="Toggle sound" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 5 6 9H2v6h4l5 4V5z" />
+                <path class="wave" d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path class="wave" d="M18.4 5.6a9 9 0 0 1 0 12.8" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="table-copy">
+          <span class="eyebrow"><span class="eyebrow-rule"></span><span data-i18n="kicker">THE ORACLE TABLE</span></span>
+          <h1 data-i18n="greeting">静心，然后抽一张牌</h1>
+        </div>
+
+        <div id="reading" class="reading" aria-live="polite">
+          <p id="reading-empty" class="reading-empty"><span data-i18n="hintPick">点击牌面，翻开它</span></p>
+          <div id="reading-card" class="reading-card hidden">
+            <span class="reading-numeral">0 · 正位</span>
+            <b class="reading-name">愚人</b>
+            <span class="reading-sub">The Fool</span>
+            <span class="reading-keywords">开始 · 自由 · 信任</span>
+          </div>
+        </div>
+
+        <footer class="bottom-bar">
+          <p class="hint"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M12 6v4"/></svg><span data-i18n="hintDrag">拖拽换个角度 · 滚轮靠近</span></p>
+          <button id="new-draw" class="primary-button" type="button"><span data-i18n="newDraw">换一组牌</span></button>
+          <p class="disclaimer" data-i18n="disclaimer">仅供自我探索与文化体验，非专业建议</p>
+        </footer>
+      </section>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"><span></span></div>
+    </div>
+    <script type="module" src="/src/divination/main.js"></script>
+  </body>
+</html>

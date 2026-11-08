@@ -10,6 +10,7 @@
     "build:pages": "GITHUB_PAGES=true vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test:ui": "node tests/smoke.mjs",
+    "test:oracle": "node tests/oracle-visual.mjs",
     "build:file": "node scripts/standalone.mjs",
     "build:all": "npm run build && npm run build:file",
     "test:standalone": "node tests/standalone.mjs",

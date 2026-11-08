@@ -1,3 +1,4 @@
+import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 
 /** Project site: https://shanshanhli-oss.github.io/Daora/ */
@@ -11,6 +12,10 @@ export default defineConfig({
     target: 'es2022',
     chunkSizeWarningLimit: 950,
     rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        divination: resolve(__dirname, 'divination.html'),
+      },
       output: {
         manualChunks: { three: ['three'] },
       },
