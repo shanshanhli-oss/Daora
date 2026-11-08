@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { createMaterials, textTexture, landscapeTexture, seededRandom } from './materials.js';
+import { createMaterials, textTexture, landscapeTexture, seededRandom, speckle } from './materials.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { box, cylinder, sphere, torus, mesh, lathe, tube, rodBetween, frame, vase, cup, plantBranch, paperLantern, makeGlow } from './geometry.js';
 import { createBagua } from './bagua.js';
@@ -16,7 +16,7 @@ export class DojoRoom {
     this.animated=[];this.lanterns=[];this.hotspotData=[];this.clickables=[];
     this.colliders=[];this.candleFlames=[];this.leaves=[];
     this.props=[];this.keepLive=new Set();this.shelfLocals=[];this.shelfOwner=null;
-    this.buildArchitecture();this.buildWindow();this.buildWallArt();this.buildMeditation();
+    this.buildArchitecture();this.buildCeiling();this.buildWindow();this.buildWindowLight();this.buildWallArt();this.buildMeditation();
     this.buildSofa();this.buildStudy();this.buildBookshelf();this.buildTeaCorner();this.buildDetails();this.buildChartObjects();this.buildAtmosphere();
     this.tagLiving();
     this.addLighting();
@@ -47,7 +47,7 @@ export class DojoRoom {
     for(let col=0;col<25;col++) {
       const x=-5.34+col*.445;
       for(let row=0;row<4;row++) {
-        const mat=m.wood.clone();mat.color.setHSL(.061,.22,.34+random()*.085);
+        const mat=m.wood.clone();mat.color.setHSL(.061,.24,.40+random()*.09);
         const board=mesh(floorGeometry,mat,this.root,[x,-.015,-3.47+row*2.34+(col%2?.58:0)]);
       }
     }
@@ -86,6 +86,85 @@ export class DojoRoom {
       cylinder(this.root,m.ochreLinen,.009,.14,[-3.43,.068,z+.15],5).rotation.z=Math.PI/2;
       cylinder(this.root,m.ochreLinen,.009,.14,[2.63,.068,z+.15],5).rotation.z=Math.PI/2;
     }
+  }
+
+  /** A coffered ceiling caps the open diorama, so orbiting high shows a finished roof, never bare beam tops. */
+  buildCeiling() {
+    const canvas=document.createElement('canvas');canvas.width=512;canvas.height=512;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='#221619';ctx.fillRect(0,0,512,512);
+    // Recessed coffers: each panel steps inward with a warm rim.
+    for(let px=0;px<4;px++)for(let py=0;py<4;py++) {
+      const x=px*128,y=py*128;
+      ctx.strokeStyle='rgba(156,118,72,.5)';ctx.lineWidth=5;ctx.strokeRect(x+7,y+7,114,114);
+      ctx.strokeStyle='rgba(60,36,30,.9)';ctx.lineWidth=9;ctx.strokeRect(x+17,y+17,94,94);
+      ctx.fillStyle='#1b1215';ctx.fillRect(x+24,y+24,80,80);
+      ctx.strokeStyle='rgba(196,152,96,.16)';ctx.lineWidth=2;ctx.strokeRect(x+32,y+32,64,64);
+    }
+    const random=seededRandom(87);
+    speckle(ctx,512,512,2600,'rgba(230,196,150,ALPHA)','rgba(0,0,0,ALPHA)',random);
+    const texture=new THREE.CanvasTexture(canvas);
+    texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;texture.repeat.set(2.6,2.2);
+    texture.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+    const coffer=new THREE.MeshStandardMaterial({map:texture,roughness:.6,bumpMap:texture,bumpScale:.02});
+    const slab=box(this.root,coffer,[11.6,.08,9.6],[0,5.46,0]);
+    const m=this.m;
+    // The roof cap overhangs like eaves; scalloped tile rows keep the top view crafted, not blank.
+    const tileCanvas=document.createElement('canvas');tileCanvas.width=512;tileCanvas.height=512;
+    const tc=tileCanvas.getContext('2d');
+    tc.fillStyle='#37303a';tc.fillRect(0,0,512,512);
+    for(let row=0;row<16;row++) {
+      const y=row*32;
+      const shade=tc.createLinearGradient(0,y,0,y+32);
+      shade.addColorStop(0,'rgba(226,204,176,.16)');shade.addColorStop(.7,'rgba(0,0,0,.12)');shade.addColorStop(1,'rgba(0,0,0,.34)');
+      tc.fillStyle=shade;tc.fillRect(0,y,512,32);
+      tc.strokeStyle='rgba(16,12,16,.85)';tc.lineWidth=3;
+      tc.beginPath();
+      for(let x=0;x<=512;x+=32) {
+        tc.moveTo(x,y+32);tc.arc(x+16,y+32,16,Math.PI,0);
+      }
+      tc.stroke();
+      tc.strokeStyle='rgba(210,186,150,.10)';tc.lineWidth=1.5;
+      tc.beginPath();
+      for(let x=0;x<=512;x+=32) { tc.moveTo(x,y+30);tc.arc(x+16,y+30,14,Math.PI,0); }
+      tc.stroke();
+    }
+    speckle(tc,512,512,2200,'rgba(224,196,158,ALPHA)','rgba(0,0,0,ALPHA)',seededRandom(203));
+    const tileTexture=new THREE.CanvasTexture(tileCanvas);
+    tileTexture.colorSpace=THREE.SRGBColorSpace;tileTexture.wrapS=tileTexture.wrapT=THREE.RepeatWrapping;tileTexture.repeat.set(3.2,2.6);
+    tileTexture.anisotropy=Math.min(8,this.renderer.capabilities.getMaxAnisotropy());
+    const roofTile=new THREE.MeshStandardMaterial({map:tileTexture,roughness:.74,bumpMap:tileTexture,bumpScale:.03});
+    const cap=box(this.root,roofTile,[11.78,.07,9.78],[0,5.56,0],.02);
+    // Ridge beam with brass end caps, and a gilt eave line, so the top view reads as crafted.
+    box(this.root,m.darkWood,[11.5,.11,.22],[0,5.65,0],.03);
+    for(const x of [-5.68,5.68])sphere(this.root,m.brass,.07,[x,5.65,0],[1,.72,.72]);
+    for(const z of [-4.86,4.86])box(this.root,m.agedBrass,[11.82,.022,.05],[0,5.53,z]);
+    for(const x of [-5.86,5.86])box(this.root,m.agedBrass,[.05,.022,9.82],[x,5.53,0]);
+    this.keepLive.add(slab);this.keepLive.add(cap); // keep their textures unmerged for clarity
+  }
+
+  /** Soft volumetric shaft from the lattice window, plus a warm pool where the light lands. */
+  buildWindowLight() {
+    const m=this.m;
+    const canvas=document.createElement('canvas');canvas.width=128;canvas.height=256;
+    const ctx=canvas.getContext('2d');
+    const fade=ctx.createLinearGradient(0,0,0,256);
+    fade.addColorStop(0,'rgba(255,238,205,.5)');fade.addColorStop(.55,'rgba(255,230,185,.13)');fade.addColorStop(1,'rgba(255,230,185,0)');
+    ctx.fillStyle=fade;ctx.fillRect(0,0,128,256);
+    // Feather the side edges so the shaft fades instead of ending in a hard line.
+    const side=ctx.createLinearGradient(0,0,128,0);
+    side.addColorStop(0,'rgba(0,0,0,1)');side.addColorStop(.25,'rgba(0,0,0,0)');side.addColorStop(.75,'rgba(0,0,0,0)');side.addColorStop(1,'rgba(0,0,0,1)');
+    ctx.globalCompositeOperation='destination-out';ctx.fillStyle=side;ctx.fillRect(0,0,128,256);
+    const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
+    const material=new THREE.MeshBasicMaterial({map:texture,transparent:true,opacity:.62,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide,fog:false});
+    const shaft=new THREE.Group();shaft.position.set(-3.9,1.75,1.62);shaft.rotation.y=.72;this.root.add(shaft);
+    for(const roll of [-.16,.18]) {
+      const plane=mesh(new THREE.PlaneGeometry(2.9,4.7),material,shaft,[0,0,0]);
+      plane.rotation.z=.72+roll;plane.castShadow=plane.receiveShadow=false;plane.renderOrder=6;
+    }
+    const pool=mesh(new THREE.CircleGeometry(1.55,40),new THREE.MeshBasicMaterial({map:m.glow,color:0xe8cf9f,transparent:true,opacity:.30,blending:THREE.AdditiveBlending,depthWrite:false,fog:false}),this.root,[-2.75,.095,1.55],[-Math.PI/2,0,0]);
+    pool.castShadow=pool.receiveShadow=false;pool.renderOrder=5;pool.scale.set(1,.72,1);
+    this.keepLive.add(shaft);this.keepLive.add(pool);
   }
 
   buildWindow() {
@@ -134,13 +213,14 @@ export class DojoRoom {
     // The five phases are real carved wall pieces, each interactive.
     const elements=[['金','Earthly clarity'],['木','Quiet growth'],['水','Deep stillness'],['火','Gentle warmth'],['土','Grounded presence']];
     elements.forEach(([glyph,description],index)=>{
-      const group=this.region(`Five elements ${glyph}`,[-1.95+index*.92,3.35,-4.36]);
+      // Mounted proud of the structural posts (whose faces sit at z=-4.19), so no post can cover a plaque.
+      const group=this.region(`Five elements ${glyph}`,[-1.95+index*.92,3.42,-4.12]);
       box(group,m.lacquer,[.72,.97,.10],[0,0,0],.035);
       frame(group,m.agedBrass,.66,.91,.025,.013,[0,0,.058]);
-      const material=this.materialLabel(glyph,{width:256,height:384,size:196,background:'#251b21',color:'#b89a63',border:false});
+      const material=this.materialLabel(glyph,{width:256,height:384,size:196,background:'#2c2127',color:'#d9bc85',border:false});
       box(group,material,[.60,.85,.014],[0,0,.062]);
       sphere(group,m.brass,.018,[0,-.37,.083],[1,1,.5]);
-      this.addHotspot(`element-${index}`,glyph,description,[-1.95+index*.92,3.35,-4.12],{compact:true});
+      this.addHotspot(`element-${index}`,glyph,description,[-1.95+index*.92,3.42,-3.86],{compact:true});
     });
     const calligraphy=this.region('Stillness scroll',[4.3,3.17,-4.37]);
     box(calligraphy,m.paper,[.91,2.10,.03],[0,0,.01]);
@@ -456,6 +536,24 @@ export class DojoRoom {
     }
     sphere(chimes,m.brass,.035,[0,-.50,0]);
     this.animated.push({type:'chimes',object:chimes});
+
+    // A standing lantern warms the open side of the room and balances the composition.
+    const stand=this.region('Standing lantern',[3.95,0,-1.15]);
+    lathe(stand,m.darkWood,[[0,0],[.16,0],[.10,.03],[.045,.10],[.045,.28]],[0,0,0]);
+    rodBetween(stand,m.darkWood,[0,.26,0],[0,1.62,0],.032);
+    rodBetween(stand,m.agedBrass,[0,1.62,0],[.26,1.78,0],.018);
+    const standing=paperLantern(stand,m,[.34,1.52,0],.30,.34);
+    this.lanterns.push(standing);
+    makeGlow(stand,m,[.34,1.52,0],0xf4ba6b,1.6,.20);
+    this.collider(3.95,-1.15,.5,.5);
+
+    // A tall flower stand with a celadon vase brings a sprig of green to the back wall.
+    const flowerStand=this.region('Flower stand',[-2.75,0,-3.8]);
+    lathe(flowerStand,m.lacquer,[[0,0],[.20,0],[.22,.04],[.10,.10],[.07,.86],[.16,.92],[.17,1.0]],[0,0,0]);
+    cylinder(flowerStand,m.lacquer,.19,.035,[0,1.02,0],28);
+    vase(flowerStand,m.celadon,[0,1.04,0],.55);
+    plantBranch(flowerStand,m,[0,1.30,0],.55,8);
+    this.collider(-2.75,-3.8,.5,.5);
   }
 
   buildThreshold() {
@@ -496,26 +594,26 @@ export class DojoRoom {
     // Three drifting smoke wisps are translucent sprites, not opaque grey geometry.
     for(let i=0;i<10;i++) {
       const material=new THREE.SpriteMaterial({map:m.smoke,transparent:true,opacity:.19,depthWrite:false,color:0xc7c1b4});
-      const sprite=new THREE.Sprite(material);sprite.position.set(i*.014,3.04+i*.095,-4.1);sprite.scale.set(.12+i*.013,.15+i*.015,1);this.root.add(sprite);
+      const sprite=new THREE.Sprite(material);sprite.position.set(i*.014,3.04+i*.095,-3.98);sprite.scale.set(.12+i*.013,.15+i*.015,1);this.root.add(sprite);
       this.animated.push({type:'smoke',object:sprite,index:i,baseY:3.04+i*.095});
     }
   }
 
   addLighting() {
-    this.scene.background=new THREE.Color(0x11131b);
-    this.scene.fog=new THREE.FogExp2(0x14151b,.025);
-    const hemi=new THREE.HemisphereLight(0x9788a6,0x381f18,.65);this.scene.add(hemi);
-    const key=new THREE.DirectionalLight(0xffdcb0,1.20);key.position.set(2.8,8,5);key.castShadow=true;
+    this.scene.background=new THREE.Color(0x161824);
+    this.scene.fog=new THREE.FogExp2(0x1a1c26,.025);
+    const hemi=new THREE.HemisphereLight(0x9788a6,0x40241c,.80);this.scene.add(hemi);
+    const key=new THREE.DirectionalLight(0xffdcb0,1.35);key.position.set(2.8,8,5);key.castShadow=true;
     key.shadow.mapSize.set(2048,2048);key.shadow.camera.left=-8;key.shadow.camera.right=8;key.shadow.camera.top=8;key.shadow.camera.bottom=-8;
     key.shadow.camera.near=.5;key.shadow.camera.far=25;key.shadow.normalBias=.035;key.shadow.bias=-.00012;
     this.scene.add(key);
-    const fill=new THREE.DirectionalLight(0x8c9fc0,1.0);fill.position.set(-7,5,3);this.scene.add(fill);
-    const warm=new THREE.PointLight(0xffb665,13,8,2);warm.position.set(-3.25,3.86,-1.88);warm.castShadow=false;this.scene.add(warm);
-    const warm2=new THREE.PointLight(0xffbb72,12,7,2);warm2.position.set(2.91,3.9,-2.5);this.scene.add(warm2);
-    const warm3=new THREE.PointLight(0xffb665,8,5,2);warm3.position.set(4.56,4.0,2);this.scene.add(warm3);
-    const windowGlow=new THREE.PointLight(0x8daec7,7,6,2);windowGlow.position.set(-4.9,3.1,1.5);this.scene.add(windowGlow);
+    const fill=new THREE.DirectionalLight(0x8c9fc0,1.05);fill.position.set(-7,5,3);this.scene.add(fill);
+    const warm=new THREE.PointLight(0xffb665,15,8,2);warm.position.set(-3.25,3.86,-1.88);warm.castShadow=false;this.scene.add(warm);
+    const warm2=new THREE.PointLight(0xffbb72,14,7,2);warm2.position.set(2.91,3.9,-2.5);this.scene.add(warm2);
+    const warm3=new THREE.PointLight(0xffb665,9.5,5,2);warm3.position.set(4.56,4.0,2);this.scene.add(warm3);
+    const windowGlow=new THREE.PointLight(0x9dbbd4,9,6,2);windowGlow.position.set(-4.9,3.1,1.5);this.scene.add(windowGlow);
     // Broad spotlights pool light on the floor and desk, creating a volumetric feel.
-    for(const [x,y,z,targetX,targetZ,power] of [[-3.25,4.00,-1.9,-2.1,-.6,28],[2.9,4.0,-2.5,1.4,-2.4,25],[4.55,4.1,2,3.4,1.4,18]]) {
+    for(const [x,y,z,targetX,targetZ,power] of [[-3.25,4.00,-1.9,-2.1,-.6,32],[2.9,4.0,-2.5,1.4,-2.4,29],[4.55,4.1,2,3.4,1.4,21]]) {
       const spot=new THREE.SpotLight(0xffce8f,power,9,Math.PI/3.4,.62,1.5);spot.position.set(x,y,z);spot.target.position.set(targetX,0,targetZ);this.scene.add(spot,spot.target);
     }
     const orbLight=new THREE.PointLight(0xd0a4a0,2.1,2.4,2);orbLight.position.set(-3.87,1.65,-3.59);this.scene.add(orbLight);
@@ -679,8 +777,8 @@ export class DojoRoom {
       halo.material.opacity=.37+Math.sin(seconds*6+phase)*.09;
     });
     // Keep only a restrained natural fluctuation, avoiding a nightclub effect.
-    this.lights.warm.intensity=13+Math.sin(seconds*2.2)*.18;
-    this.lights.warm2.intensity=12+Math.sin(seconds*1.8+1)*.15;
+    this.lights.warm.intensity=15+Math.sin(seconds*2.2)*.18;
+    this.lights.warm2.intensity=14+Math.sin(seconds*1.8+1)*.15;
   }
 
   /** Batch only immutable room meshes; never merge animated or interactive hierarchies. */
@@ -735,6 +833,8 @@ export class DojoRoom {
       'Ceramic garden stool':{id:'stool',action:'hint',hintZh:'瓷凳。',hintEn:'A ceramic stool.'},
       'Singing bowl':{id:'bowl',action:'bowl',hintZh:'铜磬。打开声音后，点一下会响。',hintEn:'A bowl. With sound on, a tap rings it.'},
       'Window chimes':{id:'chimes',action:'hint',hintZh:'窗边的铃。',hintEn:'Chimes by the window.'},
+      'Standing lantern':{id:'standing-lantern',action:'hint',hintZh:'落地的灯。可以挪到喜欢的角落。',hintEn:'A floor lantern. Move it where it feels right.'},
+      'Flower stand':{id:'flower-stand',action:'hint',hintZh:'花几。一枝春色。',hintEn:'A flower stand with a sprig of green.'},
       'BaZi calendar':{id:'bazi-desk',action:'hint',hintZh:'八字的小案。光点另开命盘。',hintEn:'The small BaZi stand. The glowing mark opens the chart.'},
       'Ziwei star map':{id:'ziwei-map',action:'hint',hintZh:'紫微的星盘。光点另开十二宫。',hintEn:'The Zi Wei disc. The glowing mark opens the palaces.'},
       'Landscape scroll':{id:'painting',action:'hint',hintZh:'一幅山水。',hintEn:'A landscape scroll.'},
