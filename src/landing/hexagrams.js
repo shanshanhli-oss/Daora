@@ -1,9 +1,13 @@
 /**
- * Traditional six-line cast (六爻) for the DAORA landing.
+ * Traditional six-line cast (六爻) for DAORA.
  * Three coins, six times, lines stacked from the bottom.
  * Old yin (6) and old yang (9) are moving lines and produce the changed figure.
- * Glosses are original DAORA images, not scripture quotes and not copied from any site.
+ * glossZh / glossEn are original short images.
+ * judgment, tuan, image and lines come from the received Zhou Yi (public domain),
+ * with original plain-language explanations attached in src/iching.
  */
+import { classicByNumber } from '../iching/classic.js';
+import { hexagramSymbol, lineTitle } from '../iching/line.js';
 
 const TRI = {
   乾: '111',
@@ -97,7 +101,33 @@ const BY_KEY = new Map();
 
 export const book = RAW.map(([no, name, lower, upper, en, glossZh, glossEn]) => {
   const key = TRI[lower] + TRI[upper];
-  const entry = { no, name, lower, upper, en, glossZh, glossEn, key };
+  const classic = classicByNumber(no);
+  const lines = classic.lines.map((line, index) => ({
+    index,
+    title: lineTitle(index, key[index] === '1'),
+    yang: key[index] === '1',
+    text: line.text,
+    explainZh: line.explainZh,
+    explainEn: line.explainEn,
+  }));
+  const entry = {
+    no,
+    name,
+    lower,
+    upper,
+    en,
+    glossZh,
+    glossEn,
+    key,
+    symbol: hexagramSymbol(no),
+    judgment: classic.judgment,
+    tuan: classic.tuan,
+    image: classic.image,
+    explainZh: classic.explainZh,
+    explainEn: classic.explainEn,
+    lines,
+    special: classic.special || null,
+  };
   if (BY_KEY.has(key)) throw new Error(`Duplicate hexagram key ${key}`);
   BY_KEY.set(key, entry);
   return entry;
@@ -153,4 +183,38 @@ export function assemble(lines) {
 export function drawLot(rng = Math.random) {
   const index = Math.min(book.length - 1, Math.floor(rng() * book.length));
   return book[index];
+}
+
+/** Stable daily figure. The same civil date always returns the same hexagram. */
+export function dailyIndex(dateKey) {
+  let hash = 2166136261;
+  const text = String(dateKey);
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % book.length;
+}
+
+export function dailyHexagram(date = new Date()) {
+  const key = date instanceof Date
+    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    : String(date);
+  return book[dailyIndex(key)];
+}
+
+/**
+ * 答案之书. A hexagram and one of its lines, with the classical sentence
+ * and DAORA's own plain-language line.
+ */
+export function drawAnswer(rng = Math.random) {
+  const entry = drawLot(rng);
+  const index = Math.min(entry.lines.length - 1, Math.floor(rng() * entry.lines.length));
+  const line = entry.lines[index];
+  return {
+    entry,
+    line,
+    zh: `${entry.symbol} ${entry.name}。${line.title}：${line.text}${line.explainZh}`,
+    en: `${entry.symbol} ${entry.name}. ${line.title}: ${line.text} ${line.explainEn}`,
+  };
 }

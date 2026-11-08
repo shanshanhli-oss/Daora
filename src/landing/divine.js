@@ -1,5 +1,6 @@
-import { PLACES, assemble, drawLot, tossCoins } from './hexagrams.js';
+import { PLACES, assemble, dailyHexagram, drawLot, tossCoins } from './hexagrams.js';
 import { t } from './copy.js';
+import { createReading, hexagramFacts, readSettings, writeSettings } from '../reading.js';
 
 const STORAGE = 'daora-daily-hexagram';
 const TOSS_LABELS = {
@@ -60,7 +61,14 @@ function figureBlock(entry, lines, lang) {
   const rows = lines
     ? lines.map((line, index) => `<div class="cast-fig-row"><span>${PLACES[index][lang === 'en' ? 'en' : 'zh']}</span>${lineFigure(line)}<small>${line.sum}</small></div>`).reverse().join('')
     : `<div class="cast-fig-name">${name}</div>`;
-  return `<article class="cast-fig"><header><small>${entry.no}</small><b>${name}</b></header>${lines ? `<div class="cast-fig-lines">${rows}</div>` : ''}<p>${gloss}</p></article>`;
+  const explain = lang === 'en' ? entry.explainEn : entry.explainZh;
+  return `<article class="cast-fig"><header><small>${entry.symbol} ${entry.no}</small><b>${name}</b></header>${lines ? `<div class="cast-fig-lines">${rows}</div>` : ''}<p class="cast-classic">${entry.judgment}</p><p class="cast-classic">${entry.image}</p><p>${explain}</p><p class="cast-note">${gloss}</p></article>`;
+}
+
+function dailyCard(lang) {
+  const entry = dailyHexagram(new Date());
+  const explain = lang === 'en' ? entry.explainEn : entry.explainZh;
+  return `<section class="daily-hex"><p class="cast-label">${t(lang, 'dailyTitle')}</p><h3>${entry.symbol} ${entry.name}</h3><p class="cast-classic">${entry.judgment}</p><p>${explain}</p><button type="button" class="btn ghost" data-action="ai-daily">${t(lang, 'aiReading')}</button><div class="reading-slot" data-reading-slot="daily"></div></section>`;
 }
 
 function changedLines(lines) {
@@ -100,6 +108,7 @@ export function mountDivine(root, { reduced = false } = {}) {
     const next = state.lines.length;
     root.innerHTML = `
       <div class="cast">
+        ${dailyCard(lang)}
         <div class="cast-modes" role="tablist">
           <button type="button" data-cast="lines" aria-pressed="${state.mode === 'lines'}">${t(lang, 'castModeLines')}</button>
           <button type="button" data-cast="lot" aria-pressed="${state.mode === 'lot'}">${t(lang, 'castModeLot')}</button>
@@ -114,7 +123,7 @@ export function mountDivine(root, { reduced = false } = {}) {
     return `
       <p class="cast-lead">${t(lang, 'castLotLead')}</p>
       <div class="cast-lot">${card}</div>
-      ${state.lot ? `<p class="cast-note">${t(lang, 'castLotResult')}</p>` : ''}
+      ${state.lot ? `<p class="cast-note">${t(lang, 'castLotResult')}</p><button type="button" class="btn ghost" data-action="ai-lot">${t(lang, 'aiReading')}</button><div class="reading-slot" data-reading-slot="lot"></div>` : ''}
       <button type="button" class="btn gold cast-action" data-action="lot">${state.lot ? t(lang, 'castLotAgain') : t(lang, 'castLotButton')}</button>
       <p class="cast-disclaimer">${t(lang, 'castDisclaimer')}</p>`;
   }
@@ -163,7 +172,11 @@ export function mountDivine(root, { reduced = false } = {}) {
   function resultView(lang, cast) {
     const changedFigures = cast.changed ? changedLines(cast.lines) : null;
     const moving = cast.moving.length
-      ? `<section class="cast-moving"><h4>${t(lang, 'castMoving')}</h4><ul>${cast.moving.map(({ index, line }) => `<li><b>${placeName(index)}</b><span>${lang === 'en' ? line.en : line.zh}</span><small>${line.sum}</small></li>`).join('')}</ul><p>${t(lang, 'castPlace')} · ${cast.moving.map(({ index }) => placeName(index)).join(lang === 'en' ? ', ' : '、')}</p></section>`
+      ? `<section class="cast-moving"><h4>${t(lang, 'castMoving')}</h4><ul>${cast.moving.map(({ index, line }) => {
+        const yao = cast.primary.lines[index];
+        const words = lang === 'en' ? yao.explainEn : yao.explainZh;
+        return `<li><b>${yao.title} · ${placeName(index)}</b><span>${escapeText(yao.text)}</span><small>${lang === 'en' ? line.en : line.zh} · ${line.sum}</small><p>${escapeText(words)}</p></li>`;
+      }).join('')}</ul></section>`
       : `<section class="cast-moving"><h4>${t(lang, 'castStill')}</h4><p>${t(lang, 'castNoChange')}</p></section>`;
     return `
       <header class="cast-head">
@@ -181,7 +194,10 @@ export function mountDivine(root, { reduced = false } = {}) {
       ${moving}
       <section class="cast-nuclear"><p class="cast-label">${t(lang, 'castNuclear')}</p>${figureBlock(cast.nuclear, null, lang)}<p class="cast-note">${t(lang, 'castNuclearNote')}</p></section>
       <p class="cast-image-label">${t(lang, 'castImage')}</p>
+      <p class="cast-tuan">${cast.primary.tuan}</p>
       <p class="cast-disclaimer">${t(lang, 'castDisclaimer')}</p>
+      <button type="button" class="btn ghost cast-action" data-action="ai-cast">${t(lang, 'aiReading')}</button>
+      <div class="reading-slot" data-reading-slot="cast"></div>
       <button type="button" class="btn ghost cast-action" data-action="reset">${t(lang, 'castAgain')}</button>`;
   }
 
@@ -199,6 +215,16 @@ export function mountDivine(root, { reduced = false } = {}) {
       state.lot = drawLot();
       paint();
     });
+    root.querySelector('[data-action="ai-daily"]')?.addEventListener('click', () => {
+      const entry = dailyHexagram(new Date());
+      askReading('daily', { primary: entry, moving: [], changed: null });
+    });
+    root.querySelector('[data-action="ai-cast"]')?.addEventListener('click', () => {
+      if (state.lines.length === 6) askReading('cast', assemble(state.lines));
+    });
+    root.querySelector('[data-action="ai-lot"]')?.addEventListener('click', () => {
+      if (state.lot) askReading('lot', { primary: state.lot, moving: [], changed: null });
+    });
     root.querySelector('[data-action="reset"]')?.addEventListener('click', () => {
       state.lines = [];
       state.latest = null;
@@ -206,6 +232,27 @@ export function mountDivine(root, { reduced = false } = {}) {
       state.question = '';
       try { localStorage.removeItem(STORAGE); } catch { /* ignore */ }
       paint();
+    });
+  }
+
+  async function askReading(slot, cast) {
+    const host = root.querySelector(`[data-reading-slot="${slot}"]`);
+    if (!host) return;
+    host.innerHTML = `<p class="cast-note">${t(state.lang, 'aiWaiting')}</p>`;
+    const settings = readSettings(localStorage);
+    const result = await createReading(hexagramFacts(cast), settings, { lang: state.lang });
+    const badge = result.source === 'model' ? t(state.lang, 'aiModel') : t(state.lang, 'aiTemplate');
+    const note = result.fallback ? `<p class="cast-note">${t(state.lang, 'aiFallback')}</p>` : '';
+    host.innerHTML = `<article class="reading-card"><p class="eyebrow">${badge}</p>${note}<p>${escapeText(result.text)}</p></article><form class="ai-settings"><p>${t(state.lang, 'aiNote')}</p><label>${t(state.lang, 'aiEndpoint')}<input name="endpoint" type="url" value="${escapeAttr(settings.endpoint)}"></label><label>${t(state.lang, 'aiModelName')}<input name="model" value="${escapeAttr(settings.model)}"></label><label>${t(state.lang, 'aiKey')}<input name="apiKey" type="password" autocomplete="off"></label><button type="submit" class="btn ghost">${t(state.lang, 'aiSave')}</button></form>`;
+    host.querySelector('form')?.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const data = new FormData(event.target);
+      const previous = readSettings(localStorage);
+      writeSettings({
+        endpoint: data.get('endpoint'),
+        model: data.get('model'),
+        apiKey: String(data.get('apiKey') || '') || previous.apiKey,
+      }, localStorage);
     });
   }
 

@@ -8,6 +8,9 @@ import { computeZiwei, locateHoroscope } from './ziwei.js';
 import { searchCountries, searchRegions, searchCities, getCity, getCountry, shouldSkipRegion, reduceCascade, placeLabel, countryLabel, regionLabel, manualPlace, PLACE_DATASET, findExactCity, regionOf } from './geo.js';
 import { consultDraft } from './consult.js';
 import { readingHTML, baziSpaceHTML, ziweiSpaceHTML, consultHTML } from './chart-space.js';
+import { planFurnishings } from './furnishings.js';
+import { drawAnswer } from './landing/hexagrams.js';
+import { baziFacts, ziweiFacts, createReading, readSettings, writeSettings } from './reading.js';
 
 const icons={CalendarDays,Clock3,MapPin,ArrowUpRight,Sparkles,LockKeyhole,CircleDollarSign,VolumeX,Volume2,Wind,ArrowRight,Mouse,Scan,Footprints,Maximize,Minimize,House,BookOpen,CircleHelp,X,Check,Leaf,Droplets,Flame,Mountain,Feather,MoveUpRight,Pause,Play,PencilLine,ShieldCheck,RotateCcw,Eye,Heart,Info,Coins,ChevronRight,Compass};
 const $=(selector,parent=document)=>parent.querySelector(selector);
@@ -137,7 +140,7 @@ function renderHotspot(id,focus=true){
 }
 
 function servicesHTML(){
-  return `${headerHTML(t('servicesKicker'))}<h2 id="detail-title">${t('servicesTitle')}</h2><p class="panel-intro">${t('servicesIntro')}</p>${services.map(service=>`<article class="service-card"><div class="service-heading"><span class="service-symbol">${service.glyph}</span><div><h3>${t(service.title)}</h3><small>${t(service.duration)}</small></div><span class="service-price">${service.price==='serviceFree'?t('serviceFree'):service.price}</span></div><p>${t(service.text)}</p><button class="text-button" data-service="${service.id}">${service.id==='tea'?t('servicePreview'):t(service.action)}<i data-lucide="arrow-right"></i></button></article>`).join('')}<div class="panel-divider"></div>${noticeHTML(t('servicesDisclaim'),'info')}`;
+  return `${headerHTML(t('servicesKicker'))}<h2 id="detail-title">${t('servicesTitle')}</h2><p class="panel-intro">${t('servicesIntro')}</p>${services.map(service=>`<article class="service-card"><div class="service-heading"><span class="service-symbol">${service.glyph}</span><div><h3>${t(service.title)}</h3><small>${t(service.duration)}</small></div><span class="service-price">${t('serviceFree')}</span></div><p>${t(service.text)}</p><button class="text-button" data-service="${service.id}">${t('serviceStart')}<i data-lucide="arrow-right"></i></button></article>`).join('')}<div class="panel-divider"></div>${noticeHTML(t('servicesDisclaim'),'info')}`;
 }
 function memoryRecordsHTML(){
   const personal=state.records.filter(entry=>!entry.sample&&entry.kind==='memory').slice(0,3);
@@ -150,7 +153,7 @@ function recordsHTML(){
   return `${headerHTML(t('recordsKicker'))}<h2 id="detail-title">${t('recordsTitle')}</h2><p class="panel-intro">${t('recordsIntro')}</p><button class="primary-button panel-action" data-action="new-record"><i data-lucide="pencil-line"></i>${t('recordNew')}</button><p class="privacy-note" style="margin:19px 0 28px">${t('demoRecords')}</p><div>${state.records.length?state.records.map(entry=>`<article class="record-card"><div class="record-content"><div class="record-meta"><span>${escapeHTML(entry.date)} · ${escapeHTML(entry.time)}</span><span>${entry.sample?t('markDemo'):t('markPersonal')}</span></div><h3>${entry.sample&&copy.zh[entry.title]?t(entry.title):escapeHTML(entry.title)}</h3><p>${entry.sample&&copy.zh[entry.body]?t(entry.body):escapeHTML(entry.body)}</p><small>${entry.sample?(state.language==='en'?entry.tag.split(' / ')[1]:entry.tag.split(' / ')[0]):escapeHTML(entry.tag)}</small></div></article>`).join(''):`<p class="panel-intro">${t('noRecords')}</p>`}</div><div class="panel-divider"></div>${noticeHTML(t('recordHint'),'lock-keyhole')}`;
 }
 function aboutHTML(){
-  return `${headerHTML(t('aboutKicker'))}<div class="about-mark">道</div><h2 id="detail-title">${t('aboutTitle')}</h2><p class="panel-intro">${t('aboutIntro')}</p><div class="panel-divider"></div><h3>${t('aboutWhat')}</h3><p class="panel-intro">${t('aboutText')}</p><ul class="detail-list"><li><i data-lucide="compass"></i>${t('aboutCraft')}</li><li><i data-lucide="shield-check"></i>${t('localOnly')}</li></ul><div class="panel-divider"></div><h3>${t('aboutDemo')}</h3><p class="panel-intro">${t('aboutDemoText')}</p><p class="panel-intro">${t('laterPhase')}</p><p class="chart-note">lunar-javascript MIT · iztro MIT · GeoNames CC-BY 4.0</p><div class="about-version"><span>${t('aboutVersion')}</span><span>1.3.0 · 2026</span></div>`;
+  return `${headerHTML(t('aboutKicker'))}<div class="about-mark">道</div><h2 id="detail-title">${t('aboutTitle')}</h2><p class="panel-intro">${t('aboutIntro')}</p><div class="panel-divider"></div><h3>${t('aboutWhat')}</h3><p class="panel-intro">${t('aboutText')}</p><ul class="detail-list"><li><i data-lucide="compass"></i>${t('aboutCraft')}</li><li><i data-lucide="shield-check"></i>${t('localOnly')}</li></ul><div class="panel-divider"></div><h3>${t('aboutDemo')}</h3><p class="panel-intro">${t('aboutDemoText')}</p><p class="panel-intro">${t('laterPhase')}</p><p class="chart-note">lunar-javascript MIT · iztro MIT · GeoNames CC-BY 4.0</p><div class="about-version"><span>${t('aboutVersion')}</span><span>2.0.0 · 2026</span></div>`;
 }
 function coinsHTML(){
   return `${headerHTML('INNER LIGHT · 心光')}<div class="hotspot-panel-symbol"><i data-lucide="coins"></i></div><h2 id="detail-title">${t('coinsTitle')}</h2><p class="panel-intro">${t('coinsIntro')}</p><div class="panel-stat-grid"><div class="panel-stat"><b>${state.coins}</b><small>INNER LIGHT</small></div><div class="panel-stat"><b>${state.records.filter(entry=>!entry.sample).length}</b><small>${t('moments')}</small></div></div><p class="panel-intro">${t('coinsExplainer')}</p><button class="primary-button panel-action" data-panel="breathe">${t('breatheBegin')}<i data-lucide="wind"></i></button>${noticeHTML(t('demoOnly'),'info')}`;
@@ -335,6 +338,7 @@ function beginMindJourney(place,built){
   paintElement();
   if(!scene){revealRoom();toast(t('welcomeName',{city:place.label}));return;}
   scene.setElementTheme(theme);
+  scene.room.applyFurnishings(planFurnishings(state.chart, state.ziwei));
   $('#landing').classList.add('hidden');
   $('#tunnel').classList.remove('hidden');$('#tunnel').setAttribute('aria-hidden','false');
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -368,9 +372,11 @@ function renderSystemSpace(id){
   const root=$('#system-space');if(!root)return;
   root.classList.remove('hidden');
   const form=consultHTML({t,draft:state.consult,timezone:state.profile.tz,system:id,escapeHTML});
+  const ai=`<button class="secondary-button" type="button" data-action="ai-reading" data-reading="${id}">${t('aiReading')}</button><div class="reading-slot" data-reading-slot="${id}"></div>`;
   root.innerHTML=id==='ziwei'
     ?ziweiSpaceHTML({ziwei:state.ziwei,selected:state.selectedPalace,t,escapeHTML,language:state.language,consultHTML:form,horoscope:state.horoscope})
     :baziSpaceHTML({chart:state.chart,t,escapeHTML,consultHTML:form});
+  root.insertAdjacentHTML('beforeend', ai);
   iconMarkup();
   root.querySelector('[name="horoscopeYear"]')?.addEventListener('change',event=>{
     const year=Number(event.target.value);
@@ -621,6 +627,10 @@ function bindUI(){
     else if(action==='new-record')newReflection();
     else if(action==='finish-breath')finishBreath();
     else if(action==='again-breath'){state.ritualComplete=false;openBreath();}
+    else if(action==='reading-settings')openReadingSettings();
+    else if(action==='ai-reading')runAiReading(button.dataset.reading||state.systemSpace||'bazi');
+    else if(action==='save-reading-settings')saveReadingSettings();
+    else if(action==='another-answer')openAnswer();
     else if(action==='sound'){
       button.disabled=true;
       try{const enabled=await audio.toggle();button.setAttribute('aria-pressed',String(enabled));button.setAttribute('aria-label',enabled?'Mute ambient sound':'Enable ambient sound');button.innerHTML=`<i data-lucide="${enabled?'volume-2':'volume-x'}"></i>`;iconMarkup();toast(t(enabled?'ambientOn':'ambientOff'));}
@@ -674,13 +684,70 @@ function saveMilestone(){
   if(!$('#journey-hud').classList.contains('hidden'))syncJourney(true);
   toast(t('journeySaved'));
 }
+function hintOf(prop){return state.language==='en'?prop.hintEn:prop.hintZh;}
+function showPropHint(prop){
+  const el=$('#prop-hint');if(!el)return;
+  if(!prop){el.hidden=true;el.textContent='';return;}
+  el.hidden=false;el.textContent=hintOf(prop);
+}
+function handleProp(prop,kind){
+  if(kind==='hover'){showPropHint(prop);return;}
+  if(!prop)return;
+  if(kind==='move'){toast(t('propMoved'));return;}
+  if(prop.action==='book'){openAnswer();return;}
+  if(prop.action==='qin'){
+    if(!audio?.playQin())toast(t('soundForQin'));
+    else scene?.room.pluckQin();
+    return;
+  }
+  if(prop.action==='bowl'){
+    if(!audio?.playBowl())toast(t('soundForQin'));
+    return;
+  }
+  toast(hintOf(prop));
+}
+function openAnswer(){
+  const answer=drawAnswer();
+  const body=state.language==='en'?answer.en:answer.zh;
+  showModal(`<button class="icon-button panel-close" data-action="close-modal" aria-label="${t('close')}"><i data-lucide="x"></i></button><span class="eyebrow">${t('answerTitle')}</span><h2 id="modal-title">${answer.entry.symbol} ${answer.entry.name}</h2><p class="panel-intro">${escapeHTML(answer.line.title)}：${escapeHTML(answer.line.text)}</p><p class="panel-intro">${escapeHTML(state.language==='en'?answer.line.explainEn:answer.line.explainZh)}</p><p class="chart-note">${escapeHTML(answer.entry.image)}</p><div class="modal-actions"><button class="secondary-button" type="button" data-action="another-answer">${t('answerAgain')}</button><button class="primary-button" type="button" data-action="close-modal">${t('close')}</button></div>`);
+  void body;
+}
+function readingSettingsForm(){
+  const settings=readSettings(localStorage);
+  return `<button class="icon-button panel-close" data-action="close-modal" aria-label="${t('close')}"><i data-lucide="x"></i></button><form class="modal-form" id="reading-settings"><span class="eyebrow">${t('aiReading')}</span><h2 id="modal-title">${t('aiReading')}</h2><p class="panel-intro">${t('aiNote')}</p><label>${t('aiEndpoint')}<input name="endpoint" type="url" placeholder="https://…" value="${escapeHTML(settings.endpoint)}"></label><label>${t('aiModelName')}<input name="model" maxlength="80" placeholder="gpt-4o-mini" value="${escapeHTML(settings.model)}"></label><label>${t('aiKey')}<input name="apiKey" type="password" autocomplete="off" value=""></label><p class="chart-note">${settings.apiKey?'●●●':''}</p><div class="modal-actions"><button class="secondary-button" type="button" data-action="close-modal">${t('cancel')}</button><button class="primary-button" type="button" data-action="save-reading-settings">${t('aiSave')}</button></div></form>`;
+}
+function openReadingSettings(){showModal(readingSettingsForm());}
+function saveReadingSettings(){
+  const form=$('#reading-settings');if(!form)return;
+  const data=new FormData(form);
+  const previous=readSettings(localStorage);
+  writeSettings({endpoint:data.get('endpoint'),model:data.get('model'),apiKey:String(data.get('apiKey')||'')||previous.apiKey},localStorage);
+  closeModal(false);toast(t('aiSave'));
+}
+async function runAiReading(kind){
+  const slot=document.querySelector(`[data-reading-slot="${kind}"]`)||$('#system-space');
+  if(!slot)return;
+  let host=slot.classList?.contains('reading-slot')?slot:null;
+  if(!host){
+    host=document.createElement('div');host.className='reading-slot';slot.append(host);
+  }
+  host.innerHTML=`<p class="chart-note">${t('aiWaiting')}</p>`;
+  const settings=readSettings(localStorage);
+  let payload;
+  if(kind==='ziwei')payload=ziweiFacts(state.ziwei||{});
+  else payload=baziFacts(state.chart||{pillars:{},tenGods:{},strength:{scores:{}},dominant:''});
+  const result=await createReading(payload,settings,{lang:state.language});
+  const badge=result.source==='model'?t('aiModel'):t('aiTemplate');
+  const note=result.fallback?`<p class="chart-note">${t('aiFallback')}</p>`:'';
+  host.innerHTML=`<article class="reading-card"><p class="eyebrow">${badge}</p>${note}<p>${escapeHTML(result.text)}</p></article>`;
+}
 function start(){
   const zones=Intl.supportedValuesOf?.('timeZone')||[];
   $('#tz-list').innerHTML=zones.map(zone=>`<option value="${zone}"></option>`).join('');
   translateUI();refreshCounts();fillBirthForm();
   updateRoomDate();
   try{
-    scene=new SanctuaryScene({container:$('#scene'),onHotspot:id=>renderHotspot(id),onHover,onMilestone:id=>{state.selectedMilestone=id;if(!$('#journey-hud').classList.contains('hidden'))renderJourneyList();const view=scene.inner.focusOffset(id);if(view&&scene.mode==='journey')scene.animateCamera(view.position,view.target,700);},onPassage:(phase,direction)=>{
+    scene=new SanctuaryScene({container:$('#scene'),onHotspot:id=>renderHotspot(id),onHover,onProp:handleProp,onMilestone:id=>{state.selectedMilestone=id;if(!$('#journey-hud').classList.contains('hidden'))renderJourneyList();const view=scene.inner.focusOffset(id);if(view&&scene.mode==='journey')scene.animateCamera(view.position,view.target,700);},onPassage:(phase,direction)=>{
       const veil=$('#passage');
       if(phase==='cover'){veil.querySelector('span').textContent=direction==='journey'?t('journeyTitle'):t('journeyBack');veil.classList.add('active');veil.setAttribute('aria-hidden','false');}
       else{veil.classList.remove('active');veil.setAttribute('aria-hidden','true');showJourney(direction==='journey');}
@@ -701,7 +768,7 @@ function start(){
   bindUI();
   window.daoraDiagnostics=()=>scene?{mode:scene.mode,drawCalls:scene.renderer.info.render.calls,triangles:scene.renderer.info.render.triangles,geometries:scene.renderer.info.memory.geometries,textures:scene.renderer.info.memory.textures,position:scene.camera.position.toArray().map(value=>Number(value.toFixed(2))),webgl:scene.renderer.capabilities.isWebGL2?'WebGL2':'WebGL1',hotspots:scene.room.hotspotData.length,staticBatches:scene.room.staticBatchStats,entered:state.entered,language:state.language,localRecords:state.records.filter(entry=>!entry.sample).length,element:state.chart?.dominant||null,theme:activeTheme(),door:Boolean(scene.room.wallDoor)}:{entered:state.entered,element:state.chart?.dominant||null,theme:activeTheme(),language:state.language};
   // Test-only local controls. No network endpoint; available solely on this page instance.
-  window.daora={getState:()=>({...state,ritual:undefined}),getScene:()=>scene,closePanel,openPanel:renderPanel,enterRoom:()=>{state.tunnelHold=false;const place=readPlace();if(!place)return;const built=buildCharts(place);state.profile=place;state.chart={...built.chart,computedDate:formatDate().date,computedTime:formatDate().time};state.ziwei=built.ziwei;state.horoscope=built.horoscope;if(scene)scene.setElementTheme(activeTheme());revealRoom();},setLanguage:language=>{if(['en','zh'].includes(language)){state.language=language;translateUI();updateRoomDate();}},startBreath:openBreath,finishBreath,showJourney,enterJourney:()=>{scene.enterJourney(true);showJourney(true);},leaveJourney:()=>{scene.leaveJourney(true);showJourney(false);},openSpace:openSystemSpace,setTheme:(element)=>{if(!ELEMENT_THEMES[element])return;state.themeOverride=element;paintElement();paintThemeButtons();scene?.setElementTheme(element);},holdTunnel:(on)=>{state.tunnelHold=Boolean(on);}};
+  window.daora={getState:()=>({...state,ritual:undefined}),getScene:()=>scene,closePanel,openPanel:renderPanel,enterRoom:()=>{state.tunnelHold=false;const place=readPlace();if(!place)return;const built=buildCharts(place);state.profile=place;state.chart={...built.chart,computedDate:formatDate().date,computedTime:formatDate().time};state.ziwei=built.ziwei;state.horoscope=built.horoscope;if(scene){scene.setElementTheme(activeTheme());scene.room.applyFurnishings(planFurnishings(state.chart,state.ziwei));}revealRoom();},setLanguage:language=>{if(['en','zh'].includes(language)){state.language=language;translateUI();updateRoomDate();}},startBreath:openBreath,finishBreath,showJourney,enterJourney:()=>{scene.enterJourney(true);showJourney(true);},leaveJourney:()=>{scene.leaveJourney(true);showJourney(false);},openSpace:openSystemSpace,setTheme:(element)=>{if(!ELEMENT_THEMES[element])return;state.themeOverride=element;paintElement();paintThemeButtons();scene?.setElementTheme(element);},holdTunnel:(on)=>{state.tunnelHold=Boolean(on);},showFurnishings:(ids)=>{const items=(ids||[]).map((id)=>({id,labelZh:id,labelEn:id,hintZh:'',hintEn:'',variant:id==='treasure'?'toad':id==='travel'?'globe':null,score:9}));if(scene)scene.room.applyFurnishings({items});},openAnswer,openReading:()=>runAiReading('bazi')};
 }
 // Scene creation is intentionally deferred until application bootstrap; no import-time WebGL side effects.
 try{start();}catch(error){console.error('DAORA UI startup failed',error);handleError(error);}

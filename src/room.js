@@ -4,6 +4,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { box, cylinder, sphere, torus, mesh, lathe, tube, rodBetween, frame, vase, cup, plantBranch, paperLantern, makeGlow } from './geometry.js';
 import { createBagua } from './bagua.js';
 import { WallDoor } from './wall-door.js';
+import { createPropModel } from './prop-models.js';
+import { readLayout, writeLayout } from './placement.js';
 
 /** All coordinates are in metres. Open front/right walls make the room an approachable diorama. */
 export class DojoRoom {
@@ -13,9 +15,12 @@ export class DojoRoom {
     this.root=new THREE.Group();scene.add(this.root);
     this.animated=[];this.lanterns=[];this.hotspotData=[];this.clickables=[];
     this.colliders=[];this.candleFlames=[];this.leaves=[];
+    this.props=[];this.keepLive=new Set();this.shelfLocals=[];this.shelfOwner=null;
     this.buildArchitecture();this.buildWindow();this.buildWallArt();this.buildMeditation();
     this.buildSofa();this.buildStudy();this.buildBookshelf();this.buildTeaCorner();this.buildDetails();this.buildChartObjects();this.buildAtmosphere();
+    this.tagLiving();
     this.addLighting();
+    this.buildSky();
     // Static merging is opt-in during profiling; animated hierarchy is the reliable default.
     // See PERFORMANCE.md for the scene budget.
     this.optimizeStaticGeometry();
@@ -310,6 +315,13 @@ export class DojoRoom {
     vase(g,m.purpleCeramic,[.33,1.15,.04],.65);
     plantBranch(g,m,[.33,1.68,.04],.58,3);
     this.collider(4.47,-3.55,1.7,.95);
+    this.shelfOwner=g;
+    this.shelfLocals=[
+      { y: 0.40, halfX: 0.58, halfZ: 0.24 },
+      { y: 1.16, halfX: 0.58, halfZ: 0.24 },
+      { y: 1.93, halfX: 0.58, halfZ: 0.24 },
+      { y: 2.70, halfX: 0.58, halfZ: 0.24 },
+    ];
   }
 
   buildTeaCorner() {
@@ -510,6 +522,57 @@ export class DojoRoom {
     this.lights={hemi,key,fill,warm,warm2,warm3,windowGlow,orbLight};
   }
 
+  /** Deep sky behind the open diorama: stars, a gold nebula, slow drift. */
+  buildSky() {
+    const size=1024;
+    const canvas=document.createElement('canvas');
+    canvas.width=size;canvas.height=size;
+    const g=canvas.getContext('2d');
+    g.fillStyle='#07060f';
+    g.fillRect(0,0,size,size);
+    const nebula=g.createRadialGradient(680,420,20,680,420,380);
+    nebula.addColorStop(0,'rgba(212,176,106,0.55)');
+    nebula.addColorStop(0.45,'rgba(120,72,28,0.22)');
+    nebula.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=nebula;g.fillRect(0,0,size,size);
+    const cool=g.createRadialGradient(240,700,10,240,700,280);
+    cool.addColorStop(0,'rgba(90,110,180,0.28)');
+    cool.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=cool;g.fillRect(0,0,size,size);
+    const random=seededRandom(19);
+    for (let i=0;i<900;i++) {
+      const x=random()*size,y=random()*size,r=random()*1.4+0.2;
+      g.fillStyle=`rgba(251,245,183,${0.25+random()*0.75})`;
+      g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill();
+    }
+    const texture=new THREE.CanvasTexture(canvas);
+    texture.colorSpace=THREE.SRGBColorSpace;
+    this.sky=new THREE.Mesh(
+      new THREE.SphereGeometry(42,48,32),
+      new THREE.MeshBasicMaterial({map:texture,side:THREE.BackSide,depthWrite:false}),
+    );
+    this.scene.add(this.sky);
+    const count=420;
+    const positions=new Float32Array(count*3);
+    const base=[];
+    const dust=seededRandom(91);
+    for (let i=0;i<count;i++) {
+      const radius=6+dust()*8;
+      const angle=dust()*Math.PI*2;
+      const y=dust()*6;
+      const x=Math.cos(angle)*radius;
+      const z=Math.sin(angle)*radius*0.6;
+      positions.set([x,y,z],i*3);
+      base.push({x,y,z,phase:dust()*Math.PI*2,speed:0.04+dust()*0.08});
+    }
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    const stars=new THREE.Points(geometry,new THREE.PointsMaterial({color:0xf6e2a8,size:0.045,transparent:true,opacity:0.85,depthWrite:false,blending:THREE.AdditiveBlending}));
+    this.scene.add(stars);
+    this.animated.push({type:'cosmos',object:stars,base});
+    if (this.scene.fog) this.scene.fog.density=0.016;
+  }
+
   /** Two chart objects. The glowing marker is the click target; the mesh is the thing you see. */
   buildChartObjects() {
     const m=this.m;
@@ -588,12 +651,29 @@ export class DojoRoom {
       } else if(item.type==='particles') {
         const positions=item.object.geometry.attributes.position;
         item.base.forEach((p,i)=>{positions.setXYZ(i,p.x+Math.sin(seconds*.12+p.phase)*.18,(p.y+seconds*p.speed)%4.8+.15,p.z+Math.cos(seconds*.1+p.phase)*.14);});positions.needsUpdate=true;
+      } else if(item.type==='cosmos') {
+        const positions=item.object.geometry.attributes.position;
+        item.base.forEach((p,i)=>{
+          const angle=seconds*p.speed+p.phase;
+          positions.setXYZ(i,p.x+Math.cos(angle)*0.35,p.y+Math.sin(seconds*0.2+p.phase)*0.25,p.z+Math.sin(angle)*0.35);
+        });
+        positions.needsUpdate=true;
       } else if(item.type==='smoke') {
         item.object.position.x=Math.sin(seconds*.55-item.index*.3)*(.035+item.index*.009);
         item.object.position.y=item.baseY+Math.sin(seconds*.3+item.index)*.027;
         item.object.material.opacity=.085+Math.sin(seconds*.5+item.index)*.022;
       }
     });
+    for (const prop of this.props) {
+      const strings=prop.group.userData.strings;
+      if (!strings) continue;
+      for (const string of strings) {
+        if (!string.userData.pluck) continue;
+        string.userData.pluck=Math.max(0, string.userData.pluck-0.016);
+        string.position.y=0.325+Math.sin(seconds*28+string.userData.string)*string.userData.pluck;
+      }
+    }
+    if (this.sky) this.sky.rotation.y=seconds*0.012;
     this.candleFlames.forEach(({flame,halo,phase})=>{
       flame.scale.y=1.5+Math.sin(seconds*7.7+phase)*.2;
       halo.material.opacity=.37+Math.sin(seconds*6+phase)*.09;
@@ -606,7 +686,7 @@ export class DojoRoom {
   /** Batch only immutable room meshes; never merge animated or interactive hierarchies. */
   optimizeStaticGeometry() {
     this.root.updateMatrixWorld(true);
-    const dynamic=new Set([this.wallDoor?.root,...this.animated.map(item=>item.object),...this.lanterns.map(item=>item.tassel),...this.hotspotData.map(item=>item.group),...this.candleFlames.map(item=>item.flame)]);
+    const dynamic=new Set([this.wallDoor?.root,...this.animated.map(item=>item.object),...this.lanterns.map(item=>item.tassel),...this.hotspotData.map(item=>item.group),...this.candleFlames.map(item=>item.flame),...this.keepLive]);
     const batches=new Map(),remove=[];
     const candidate=object=>{
       if(!object.isMesh||!object.geometry||Array.isArray(object.material))return false;
@@ -637,6 +717,135 @@ export class DojoRoom {
     // Remove ONLY originals whose exact merge succeeded, never a skipped bucket.
     remove.forEach(object=>{if(mergedSources.has(object))object.removeFromParent();});
     this.staticBatchStats={mergedCount,sourceCount};
+  }
+
+  /** Furniture that can be touched and dragged. Walls, floor and beams stay put. */
+  tagLiving() {
+    const specs={
+      'Velvet lounge':{id:'sofa',action:'hint',hintZh:'软榻。点一下看一句，按住可以拖到别处。',hintEn:'The lounge. Tap for a note, drag to move it.'},
+      'Scholar desk':{id:'desk',action:'hint',hintZh:'书案。拖动时会贴住地面。',hintEn:'The desk. It settles on the floor when you drag it.'},
+      'Study chair':{id:'study-chair',action:'hint',hintZh:'椅子。可以挪开再坐下看。',hintEn:'The chair. Move it, then look again.'},
+      'Curio bookshelf':{id:'shelf',action:'book',hintZh:'架上的书可以打开，是一本答案之书。',hintEn:'The books open. This one is a book of answers.'},
+      'Tea table':{id:'tea-table',action:'hint',hintZh:'茶案。拖一拖，仍贴着地面。',hintEn:'The tea table. Drag it; it stays on the floor.'},
+      'Reading chair':{id:'reading-chair',action:'hint',hintZh:'读椅。',hintEn:'The reading chair.'},
+      'Reading side table':{id:'side-table',action:'hint',hintZh:'边几与烛。',hintEn:'A side table and a candle.'},
+      'Element orb altar':{id:'altar',action:'hint',hintZh:'心灯的台子。',hintEn:'The stand of the inner light.'},
+      'Indoor ficus':{id:'ficus',action:'hint',hintZh:'一盆木。水木旺时，房间还会再添一盆。',hintEn:'A wooden plant. A strong wood or water chart adds another.'},
+      'Floor books':{id:'floor-books',action:'book',hintZh:'地上的书。打开是答案之书。',hintEn:'Books on the floor. Open them for an answer.'},
+      'Ceramic garden stool':{id:'stool',action:'hint',hintZh:'瓷凳。',hintEn:'A ceramic stool.'},
+      'Singing bowl':{id:'bowl',action:'bowl',hintZh:'铜磬。打开声音后，点一下会响。',hintEn:'A bowl. With sound on, a tap rings it.'},
+      'Window chimes':{id:'chimes',action:'hint',hintZh:'窗边的铃。',hintEn:'Chimes by the window.'},
+      'BaZi calendar':{id:'bazi-desk',action:'hint',hintZh:'八字的小案。光点另开命盘。',hintEn:'The small BaZi stand. The glowing mark opens the chart.'},
+      'Ziwei star map':{id:'ziwei-map',action:'hint',hintZh:'紫微的星盘。光点另开十二宫。',hintEn:'The Zi Wei disc. The glowing mark opens the palaces.'},
+      'Landscape scroll':{id:'painting',action:'hint',hintZh:'一幅山水。',hintEn:'A landscape scroll.'},
+      'Stillness scroll':{id:'calligraphy',action:'hint',hintZh:'静的字。',hintEn:'A scroll about stillness.'},
+    };
+    for (const child of [...this.root.children]) {
+      const spec=specs[child.name];
+      if (!spec) continue;
+      this.registerProp(child, spec);
+    }
+    this.restoreLayout();
+  }
+
+  registerProp(group, spec) {
+    const record={
+      id:spec.id,
+      kind:spec.kind||spec.id,
+      action:spec.action||'hint',
+      variant:spec.variant||null,
+      hintZh:spec.hintZh||'',
+      hintEn:spec.hintEn||'',
+      group,
+      home:group.position.clone(),
+    };
+    group.userData.propId=record.id;
+    group.traverse((child)=>{ child.userData.propId=record.id; if (spec.action==='book') child.userData.action='book'; });
+    this.keepLive.add(group);
+    this.props.push(record);
+    return record;
+  }
+
+  worldShelves() {
+    if (!this.shelfOwner) return [];
+    const origin=this.shelfOwner.position;
+    return this.shelfLocals.map((shelf)=>({
+      y:origin.y+shelf.y,
+      minX:origin.x-shelf.halfX,
+      maxX:origin.x+shelf.halfX,
+      minZ:origin.z-shelf.halfZ,
+      maxZ:origin.z+shelf.halfZ,
+    }));
+  }
+
+  restoreLayout(storage=globalThis.localStorage) {
+    if (!storage) return;
+    const layout=readLayout(storage);
+    for (const prop of this.props) {
+      const saved=layout[prop.id];
+      if (!saved) continue;
+      prop.group.position.set(saved.x, saved.y, saved.z);
+    }
+  }
+
+  rememberLayout(storage=globalThis.localStorage) {
+    if (!storage) return;
+    const layout=readLayout(storage);
+    for (const prop of this.props) {
+      layout[prop.id]={x:prop.group.position.x,y:prop.group.position.y,z:prop.group.position.z};
+    }
+    try { writeLayout(layout, storage); } catch { /* private mode */ }
+  }
+
+  /**
+   * Replace chart furnishings. The palette is not applied here;
+   * the strongest element still reaches the room through setElementTheme.
+   */
+  applyFurnishings(plan, storage=globalThis.localStorage) {
+    for (const prop of [...this.props]) {
+      if (!String(prop.id).startsWith('furnish-')) continue;
+      prop.group.removeFromParent();
+      this.keepLive.delete(prop.group);
+      this.props=this.props.filter((item)=>item!==prop);
+    }
+    const spots={
+      books:[2.35,0,1.55],
+      qin:[0.15,0,2.35],
+      treasure:[-1.15,0,2.15],
+      seal:[1.35,0,2.05],
+      travel:[-0.85,0,1.15],
+      plants:[-2.15,0,1.85],
+      water:[1.85,0,2.45],
+      scroll:[-2.55,0,0.55],
+      incense:[-2.35,0,-1.6],
+    };
+    for (const entry of plan?.items||[]) {
+      const group=createPropModel(entry.id, entry.variant);
+      const spot=spots[entry.id]||[0,0,0];
+      group.position.set(spot[0], spot[1], spot[2]);
+      group.scale.setScalar(entry.id==='qin'?1.35:1.7);
+      if (entry.id==='qin') group.rotation.y=0.5;
+      this.root.add(group);
+      this.registerProp(group,{
+        id:`furnish-${entry.id}`,
+        kind:entry.id,
+        variant:entry.variant,
+        action:entry.id==='qin'?'qin':entry.id==='books'?'book':'hint',
+        hintZh:`${entry.labelZh}。${entry.hintZh}`,
+        hintEn:`${entry.labelEn}. ${entry.hintEn}`,
+      });
+    }
+    this.restoreLayout(storage);
+  }
+
+  pluckQin() {
+    const prop=this.props.find((item)=>item.action==='qin');
+    if (!prop) return;
+    const strings=prop.group.userData.strings||[];
+    strings.forEach((string,index)=>{
+      string.position.y=0.36;
+      string.userData.pluck=0.18+index*0.05;
+    });
   }
 
   canWalkTo(x,z) {

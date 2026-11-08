@@ -107,6 +107,19 @@ export function mountZones(container, { onSelect, onHover } = {}) {
   inlay.position.y = 0.01;
   scene.add(inlay);
 
+  const starCount = mobile ? 80 : 220;
+  const starPositions = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount; i += 1) {
+    starPositions[i * 3] = (Math.random() - 0.5) * 16;
+    starPositions[i * 3 + 1] = 1 + Math.random() * 6;
+    starPositions[i * 3 + 2] = -2 - Math.random() * 8;
+  }
+  const starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+  const starField = new THREE.Points(starGeo, new THREE.PointsMaterial({
+    color: 0xfbf5b7, size: 0.03, transparent: true, opacity: 0.8, depthWrite: false, blending: THREE.AdditiveBlending,
+  }));
+  scene.add(starField);
   scene.add(new THREE.AmbientLight(0xfff6df, 0.25));
   const key = new THREE.DirectionalLight(0xfff3d2, 2.4);
   key.position.set(3, 6, 4);
@@ -208,6 +221,7 @@ export function mountZones(container, { onSelect, onHover } = {}) {
           if (obj.userData.spin) obj.rotation.y = time * 0.6;
         });
       });
+      starField.rotation.y = time * 0.05;
     }
     renderer.render(scene, camera);
   }
