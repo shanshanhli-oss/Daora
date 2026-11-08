@@ -1,3 +1,11 @@
+# DAORA landing — black and gold
+
+- Added a public landing page at `index.html`. The sanctuary welcome, four pillars and inner journey stay at `sanctuary.html`.
+- Hero: a cursor-responsive gold taiji and compass. Four schools, three steps, and a 3D room of four zones.
+- Zone 1 casts a traditional six-line figure: three coins, six tosses, bottom-up, moving lines, changed hexagram. A lot can also be drawn from the sixty-four. Glosses are original and local. Full classical line texts are not in this page yet.
+- Zone 2 opens the existing reading. Zones 3 and 4 are marked as not yet open.
+- Interest in a master is stored only in the browser.
+
 # DAORA prototype v1.2 — Inner Self Journey
 
 - Removed the central Journey Memory tower. The room centre is a low bagua floor disc again.

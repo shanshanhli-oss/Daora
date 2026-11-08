@@ -1,0 +1,4 @@
+This Font Software is licensed under the SIL Open Font License, Version 1.1.
+Noto Serif SC and Noto Sans SC are copyright of Google and contributors.
+The license text is published at https://scripts.sil.org/OFL
+These files are subsets generated for the DAORA landing page.

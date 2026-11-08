@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
-const base=process.env.TEST_URL||'http://127.0.0.1:4173';
+const root=process.env.TEST_URL||'http://127.0.0.1:4173';
+const base=new URL('sanctuary.html', root.endsWith('/')?root:`${root}/`).href;
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1,reducedMotion:'reduce'});

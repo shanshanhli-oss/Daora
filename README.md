@@ -7,6 +7,8 @@ Built with **Vite + vanilla JavaScript + Three.js**. The room, textures, calligr
 
 **Live site:** [https://shanshanhli-oss.github.io/Daora/](https://shanshanhli-oss.github.io/Daora/)
 
+The public entry is a black-and-gold landing page. **开始起盘 / Begin Reading** opens `sanctuary.html`, the existing sanctuary where a birth moment becomes the four pillars. The richer chart flow on `kimi/qipan-mvp` (place cascade, BaZi and Zi Wei rooms) is a separate branch and is not merged here, so the landing links to the reading that exists on this branch.
+
 ## Run it — three options
 
 ### Option 1: development in Cursor (recommended)

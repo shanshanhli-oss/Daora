@@ -1,7 +1,7 @@
 import {chromium} from 'playwright';
 const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 // This is the page the visual test previously captured. Reloading after dynamic code edits is required.
-for(const target of [{name:'dev',url:'http://127.0.0.1:5173'},{name:'file',url:'file:///workspace/daora/dist/daora-standalone.html'}]){
+for(const target of [{name:'dev',url:'http://127.0.0.1:5173/sanctuary.html'},{name:'file',url:'file:///workspace/daora/dist/daora-standalone.html'}]){
  const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1,reducedMotion:'reduce'});
  const errors=[],styles=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await page.goto(target.url,{waitUntil:'networkidle',timeout:60000});await page.waitForSelector('#landing:not(.hidden)',{timeout:60000});

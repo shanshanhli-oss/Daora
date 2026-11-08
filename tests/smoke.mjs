@@ -1,7 +1,8 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 
-const base=process.env.TEST_URL||'http://127.0.0.1:5173';
+const root=process.env.TEST_URL||'http://127.0.0.1:5173';
+const base=new URL('sanctuary.html', root.endsWith('/')?root:`${root}/`).href;
 const progress=name=>console.log(`[DAORA test] ${name} @ ${new Date().toISOString()}`);
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined,args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try {

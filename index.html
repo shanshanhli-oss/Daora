@@ -3,136 +3,189 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#171014" />
-    <meta name="description" content="DAORA · 我的迷你道场。一方属于你的数字静境，在光影、五行与呼吸之间，回到自己。" />
-    <title>DAORA · 我的迷你道场</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23271920'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23c7a76b' stroke-width='2'/%3E%3Ctext x='32' y='41' text-anchor='middle' font-size='27' fill='%23d9c399'%3E道%3C/text%3E%3C/svg%3E" />
+    <meta name="theme-color" content="#050505" />
+    <meta name="description" content="DAORA · 观天之道，执天之行。八字、紫微、奇门、风水。六爻以三枚铜钱连掷六次，自下而上成卦。" />
+    <title>DAORA · 观天之道</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23050505'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23FBF5B7' stroke-width='1.4'/%3E%3Ctext x='32' y='40' text-anchor='middle' font-size='24' fill='%23FBF5B7'%3E道%3C/text%3E%3C/svg%3E" />
   </head>
   <body>
-    <div id="app">
-      <div id="scene" aria-label="可交互的 DAORA 三维房间"></div>
-      <div class="scene-shade" aria-hidden="true"></div>
-      <div id="loading" class="loading-screen">
-        <div class="brand-seal">道</div>
-        <span class="eyebrow">DAORA</span>
-        <div class="loading-line"><span></span></div>
-        <p>正在布置你的静境</p>
+    <a class="skip" href="#content">跳到正文</a>
+    <div class="ambient" aria-hidden="true"></div>
+    <div class="stars" aria-hidden="true"></div>
+    <header class="nav">
+      <a class="logo" href="#top" aria-label="DAORA"><span>道</span><b>DAORA</b></a>
+      <button class="nav-toggle" type="button" data-action="menu" aria-expanded="false" aria-controls="site-nav"><span data-i18n="menu">目录</span></button>
+      <nav id="site-nav" aria-label="DAORA">
+        <a href="#bazi" data-i18n="navBazi">八字</a>
+        <a href="#ziwei" data-i18n="navZiwei">紫微</a>
+        <a href="#qimen" data-i18n="navQimen">奇门</a>
+        <a href="#fengshui" data-i18n="navFeng">风水</a>
+      </nav>
+      <div class="nav-tools">
+        <button class="lang" type="button" data-action="language" aria-label="切换为英文"><span data-lang="zh">中</span><i>/</i><span data-lang="en">EN</span></button>
+        <a class="nav-cta" href="sanctuary.html" data-i18n="begin">开始起盘</a>
       </div>
+    </header>
 
-      <section id="landing" class="landing hidden" aria-labelledby="landing-title">
-        <header class="landing-header">
-          <a class="brand" href="#" aria-label="DAORA home">
-            <span class="brand-seal small">道</span>
-            <span><b>DAORA</b><small>我的迷你道场</small></span>
-          </a>
-          <div class="landing-header-right">
-            <span class="quiet-label"><span class="status-dot"></span><span data-i18n="digitalSanctuary">A DIGITAL SANCTUARY</span></span>
-            <button class="language-button" data-action="language" aria-label="Switch language">EN <span>/</span> 中文</button>
+    <main id="content">
+      <section class="hero" id="top">
+        <div class="hero-copy">
+          <p class="eyebrow" data-i18n="eyebrow">东方玄学 · ORIENTAL METAPHYSICS</p>
+          <h1>
+            <span class="gold-text">观天之道</span>
+            <span class="gold-text">执天之行</span>
+          </h1>
+          <p class="subline" data-i18n="subline">Observe the way of heaven. Move as heaven moves.</p>
+          <p class="lede" data-i18n="lede">八字、紫微、奇门、风水——以千年典籍为本，为身在远方的你，排一张属于自己的命盘。</p>
+          <div class="hero-actions">
+            <a class="btn gold" href="sanctuary.html" data-i18n="begin">开始起盘</a>
+            <a class="btn ghost" href="#schools" data-i18n="schoolsLink">了解四门学问</a>
           </div>
-        </header>
-        <div class="landing-layout">
-          <div class="hero-copy">
-            <div class="eyebrow hero-eyebrow"><span></span><span data-i18n="welcomeKicker">THE SIGNATURE YOU ARRIVED WITH</span></div>
-            <h1 id="landing-title" class="welcome-oath" lang="zh-CN">你出生的那一刻，星辰的位置、大地的湿度、风的走向、你的第一声啼哭，都在天地之间留下了一张唯一的签名。这张签名，叫八字。它不是锁，不是镣铐，不是判决书，它是你的出场设置，是你在这个世界上只能是你而不能是别人的那个东西，接受这件事情，比改变任何事情都更需要勇气。</h1>
-            <p class="welcome-oath-en" lang="en" data-i18n="welcomeOathEn">In the moment you were born, the positions of the stars, the dampness of the earth, the way the wind was turning, and your first cry left a signature between heaven and earth that could belong to no one else. That signature is called BaZi — the Eight Characters. It is not a lock, not a shackle, not a verdict. It is the setting with which you came onstage: the fact that, in this world, you can only be you and not anybody else. Accepting this asks more courage than changing anything.</p>
-          </div>
-
-          <div class="entry-card">
-            <form id="birth-form">
-              <div class="card-topline"><span data-i18n="beginJourney">BEGIN YOUR JOURNEY</span><span>✦</span></div>
-              <h2 data-i18n="createSpace">写下你的出场</h2>
-              <p class="entry-intro" data-i18n="entryIntro">出生日期、时刻与地点。四柱按节气起算，并换算为北京时间。</p>
-              <label><span data-i18n="birthDate">出生日期</span><div class="input-wrap"><i data-lucide="calendar-days"></i><input name="birthDate" type="date" value="1995-05-20" required min="1900-01-01" max="2026-11-06" step="1" aria-label="Birth date" /></div></label>
-              <label><span data-i18n="birthTime">出生时间</span><div class="input-wrap"><i data-lucide="clock-3"></i><input name="birthTime" type="time" value="08:30" required step="60" aria-label="Birth time" /></div></label>
-              <label class="city-field"><span data-i18n="birthPlace">出生地点</span>
-                <div class="input-wrap"><i data-lucide="map-pin"></i><input name="birthCity" type="text" value="Shanghai" required maxlength="80" placeholder="City / 城市" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggest" /></div>
-                <ul id="city-suggest" class="city-suggest hidden" role="listbox"></ul>
+          <p class="scroll-hint"><span data-i18n="scroll">向下探索</span> <b>SCROLL</b></p>
+        </div>
+        <div class="hero-stage">
+          <div id="hero-mount" role="img" aria-label="可随指针轻轻偏移的金色太极与罗盘"></div>
+          <aside class="side-card">
+            <p class="side-cat" data-i18n="sideCat">国学 · 命盘</p>
+            <h2 data-i18n="sideTitle">太极金仪</h2>
+            <button class="heart" type="button" data-action="heart" aria-pressed="false" aria-label="记下这一眼">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-9.1C5 8 6.8 6.2 9.1 6.2c1.3 0 2.4.6 2.9 1.6.5-1 1.6-1.6 2.9-1.6 2.3 0 4.1 1.8 4.1 4.7C19 15.6 12 20 12 20z"/></svg>
+              <span id="heart-count">0</span>
+            </button>
+            <p class="heart-note" data-i18n="heartNote">只记在这台浏览器</p>
+            <button class="request-toggle" type="button" data-action="request-toggle" aria-expanded="false" aria-controls="request-panel">
+              <span data-i18n="request">预约大师</span>
+              <i aria-hidden="true"></i>
+            </button>
+            <form id="request-panel" hidden>
+              <p data-i18n="requestNote">只留下兴趣。不会建立预约，也不会把内容发送出去。</p>
+              <label>
+                <span data-i18n="requestField">方向</span>
+                <select name="tradition">
+                  <option value="0">八字问询</option>
+                  <option value="1">紫微问询</option>
+                  <option value="2">奇门问询</option>
+                  <option value="3">风水问询</option>
+                  <option value="4">还不确定</option>
+                </select>
               </label>
-              <button class="text-button manual-toggle" type="button" data-action="toggle-manual"><span data-i18n="manualPlace">改为手动输入经纬度与时区</span></button>
-              <div id="manual-place" class="manual-place hidden">
-                <div class="form-row">
-                  <label><span data-i18n="latitude">纬度</span><div class="input-wrap"><input name="latitude" type="number" step="0.0001" min="-90" max="90" inputmode="decimal" disabled /></div></label>
-                  <label><span data-i18n="longitude">经度</span><div class="input-wrap"><input name="longitude" type="number" step="0.0001" min="-180" max="180" inputmode="decimal" disabled /></div></label>
-                </div>
-                <label><span data-i18n="timezone">时区</span><div class="input-wrap"><input name="timezone" type="text" list="tz-list" placeholder="Europe/London" autocomplete="off" disabled /></div></label>
-                <datalist id="tz-list"></datalist>
-              </div>
-              <button class="primary-button enter-button" type="submit"><span data-i18n="readChart">推算四柱</span><i data-lucide="arrow-up-right"></i></button>
-              <div class="entry-note"><i data-lucide="sparkles"></i><span data-i18n="demoNotice">本地推算 · 无需注册 · 不会上传</span></div>
-              <div class="entry-divider"></div>
-              <p class="privacy-note"><i data-lucide="lock-keyhole"></i><span data-i18n="localOnly">信息仅保留在当前浏览器中，不会上传。</span></p>
+              <label>
+                <span data-i18n="requestNoteLabel">一句想说的话（可选）</span>
+                <textarea name="note" maxlength="400" rows="3"></textarea>
+              </label>
+              <button class="btn gold" type="submit" data-i18n="requestSave">记下意向</button>
+              <p id="request-done" hidden data-i18n="requestDone">已留在这台浏览器里。清除本站数据即可删去。</p>
             </form>
-            <div id="pillars-result" class="pillars-result hidden"></div>
-          </div>
+            <p class="credits">Design by DAORA</p>
+          </aside>
         </div>
-        <footer class="landing-footer"><span>DAORA © 2026</span><span data-i18n="footerMantra">Less noise. More presence.</span><span data-i18n="spiritualDisclaimer">仅供自我探索与文化体验，非专业建议</span></footer>
       </section>
 
-      <section id="room-ui" class="room-ui hidden" aria-label="DAORA room controls">
-        <header class="room-header glass-edge">
-          <a class="brand" href="#" data-action="home" aria-label="DAORA home"><span class="brand-seal small">道</span><span><b>DAORA</b><small data-i18n="miniDojo">我的迷你道场</small></span></a>
-          <div class="room-welcome"><span class="status-dot"></span><span data-i18n="roomGreeting">晚上好，欢迎回来</span><span class="welcome-separator">/</span><span id="room-date">静夜 · 21:08</span></div>
-          <div class="header-actions">
-            <div class="energy-chip" id="element-chip" title="Five-element count from the four pillars"><span class="energy-mini-ring" id="element-mark">木</span><span><small data-i18n="dominantLabel">命盘五行</small><b id="element-name">木</b></span></div>
-            <button class="coin-chip" data-panel="coins" aria-label="128 demo energy tokens"><i data-lucide="circle-dollar-sign"></i><b id="coin-count">128</b></button>
-            <button class="icon-button language-room" data-action="language" aria-label="Switch language"><span class="lang-short">EN</span></button>
-            <button class="icon-button" data-action="sound" aria-label="Enable ambient sound" aria-pressed="false"><i data-lucide="volume-x"></i></button>
-          </div>
+      <section class="section" id="schools">
+        <header class="section-head reveal">
+          <p class="eyebrow" data-i18n="schoolsKicker">FOUR SCHOOLS</p>
+          <h2 data-i18n="schoolsTitle">一盘一术，各有其道</h2>
+          <p data-i18n="schoolsLede">四门学问并置。每一门都只作对照，不作判决。</p>
         </header>
-
-        <aside class="room-story">
-          <span class="vertical-caption">YOUR INNER SANCTUARY</span>
-          <div class="story-card">
-            <div class="story-ornament">☯</div>
-            <span class="eyebrow" data-i18n="yourSpace">YOUR SPACE</span>
-            <h2 data-i18n="roomName">山居 · 静室</h2>
-            <p data-i18n="roomDescription">一盏灯，一缕香。<br>此刻，无需赶往任何地方。</p>
-            <div class="story-rule"></div>
-            <div class="room-stats"><div><b>01</b><small data-i18n="daysHere">入室天数</small></div><div><b>05</b><small data-i18n="elements">五行印记</small></div><div><b id="reflection-count">03</b><small data-i18n="moments">觉察瞬间</small></div></div>
-          </div>
-        </aside>
-
-        <aside class="presence-widget">
-          <div class="presence-top"><span class="eyebrow" data-i18n="beHere">BE HERE, NOW</span><i data-lucide="wind"></i></div>
-          <div class="breathing-orb"><div></div><span data-i18n="breathe">呼吸</span></div>
-          <p id="breath-prompt" data-i18n="breatheIn">深深吸气，让心慢下来</p>
-          <button class="text-button" data-panel="breathe"><span data-i18n="minuteForSelf">留一分钟给自己</span><i data-lucide="arrow-right"></i></button>
-        </aside>
-
-        <div id="hotspots" class="hotspots" aria-label="Room objects"></div>
-        <div class="room-hint"><i data-lucide="mouse"></i><span data-i18n="roomHint">拖拽环视 · 滚轮靠近 · 点击光点探索</span></div>
-        <div class="view-controls">
-          <button class="icon-button" data-action="reset-view" aria-label="Reset room view" title="Reset view"><i data-lucide="scan"></i></button>
-          <button class="icon-button" data-action="walk" aria-label="Toggle first-person walk mode" aria-pressed="false" title="Walk with WASD"><i data-lucide="footprints"></i></button>
-          <button class="icon-button" data-action="immersive" aria-label="Toggle immersive mode" title="Immersive mode"><i data-lucide="maximize"></i></button>
+        <div class="school-grid">
+          <article class="school-card reveal" id="bazi">
+            <span class="seal">八</span>
+            <p class="card-en" data-i18n="baziEn">BaZi · Four Pillars</p>
+            <h3 data-i18n="navBazi">八字</h3>
+            <p data-i18n="baziText">以出生的年月日时，按节气排出年柱、月柱、日柱、时柱。它是一张历法对照。</p>
+            <p class="quiet" data-i18n="baziMore">年柱交立春，月柱交节气。推算在浏览器里完成。</p>
+            <a href="sanctuary.html" data-i18n="more">了解更多</a>
+          </article>
+          <article class="school-card reveal" id="ziwei">
+            <span class="seal">紫</span>
+            <p class="card-en" data-i18n="ziweiEn">Zi Wei · Star chart</p>
+            <h3 data-i18n="navZiwei">紫微</h3>
+            <p data-i18n="ziweiText">以生辰看十二宫与星曜的关系。这里把它与八字放在同一次起盘的门口。</p>
+            <p class="quiet" data-i18n="ziweiMore">当前这一页先排四柱，紫微沿用同一次出生信息。</p>
+            <a href="sanctuary.html" data-i18n="more">了解更多</a>
+          </article>
+          <article class="school-card reveal" id="qimen">
+            <span class="seal">奇</span>
+            <p class="card-en" data-i18n="qimenEn">Qi Men · Time and direction</p>
+            <h3 data-i18n="navQimen">奇门</h3>
+            <p data-i18n="qimenText">以时空与方位观察局势。传统用于择时，这里只作认识。</p>
+            <p class="quiet" data-i18n="qimenMore">不提供实时占断，也不连接排盘服务器。</p>
+            <a href="#zones" data-i18n="more">了解更多</a>
+          </article>
+          <article class="school-card reveal" id="fengshui">
+            <span class="seal">风</span>
+            <p class="card-en" data-i18n="fengEn">Feng Shui · Dwelling</p>
+            <h3 data-i18n="navFeng">风水</h3>
+            <p data-i18n="fengText">看居室、朝向与山水如何安放身心。谈的是环境，不是吉凶商品。</p>
+            <p class="quiet" data-i18n="fengMore">没有上门勘测，也没有器物可买。</p>
+            <a href="#zones" data-i18n="more">了解更多</a>
+          </article>
         </div>
-        <div id="walk-help" class="walk-help hidden"><b>W A S D</b><span data-i18n="walkHelp">移动 · 拖拽转身 · Esc 返回</span></div>
-
-        <nav class="bottom-nav" aria-label="Main navigation">
-          <button class="nav-item active" data-nav="room"><i data-lucide="house"></i><span data-i18n="navRoom">我的房间</span></button>
-          <button class="nav-item" data-nav="services"><i data-lucide="sparkles"></i><span data-i18n="navServices">服务</span></button>
-          <button class="nav-item" data-nav="records"><i data-lucide="book-open"></i><span data-i18n="navRecords">记录</span><span id="record-badge" class="nav-badge">3</span></button>
-          <button class="nav-item" data-nav="about"><i data-lucide="circle-help"></i><span data-i18n="navAbout">关于</span></button>
-        </nav>
-        <aside id="journey-hud" class="journey-hud hidden">
-          <span class="eyebrow" data-i18n="journeyKicker">INNER SELF JOURNEY</span>
-          <h2 data-i18n="journeyTitle">内在旅程</h2>
-          <p data-i18n="journeyLead">沿这条缓缓升起的路，记下你如何一点点变得更靠近自己。</p>
-          <ol id="journey-list" class="journey-list"></ol>
-          <button class="secondary-button" type="button" data-action="add-milestone" data-i18n="journeyAdd">添加里程碑</button>
-          <button class="primary-button" type="button" data-action="leave-journey"><span data-i18n="journeyBack">返回静室</span><i data-lucide="arrow-right"></i></button>
-        </aside>
-        <div class="demo-corner">DAORA · v1.2</div>
       </section>
-      <div id="passage" class="passage" aria-hidden="true"><span>内在旅程</span></div>
 
-      <div id="panel-backdrop" class="panel-backdrop hidden" data-action="close-panel"></div>
-      <aside id="detail-panel" class="detail-panel hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title"></aside>
-      <div id="modal-backdrop" class="modal-backdrop hidden">
-        <section id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"></section>
-      </div>
-      <div id="toast" class="toast" role="status" aria-live="polite"><i data-lucide="check"></i><span></span></div>
-    </div>
-    <script type="module" src="/src/main.js"></script>
+      <section class="section steps" id="steps">
+        <header class="section-head reveal">
+          <p class="eyebrow" data-i18n="stepsKicker">THREE STEPS</p>
+          <h2 data-i18n="stepsTitle">从生辰，到命盘</h2>
+        </header>
+        <ol class="step-list">
+          <li class="reveal"><span>01</span><h3 data-i18n="step1">生成命盘</h3><p data-i18n="step1Text">写下出生日期、时刻与地点。四柱在本地按节气推算。</p></li>
+          <li class="reveal"><span>02</span><h3 data-i18n="step2">进入命理之室</h3><p data-i18n="step2Text">四门学问并置。你可以停留在一门上，也可以只是读完离开。</p></li>
+          <li class="reveal"><span>03</span><h3 data-i18n="step3">步入夜室</h3><p data-i18n="step3Text">推算之后走入迷你道场，也可以先在下面的四境里看一看。</p></li>
+        </ol>
+      </section>
+
+      <section class="section zones" id="zones">
+        <header class="section-head reveal">
+          <p class="eyebrow" data-i18n="zonesKicker">FOUR ZONES</p>
+          <h2 data-i18n="zonesTitle">四境 · 皆在夜色里</h2>
+          <p class="zone-teaser" data-i18n="zoneTeaser">占卜以六爻为准：三枚铜钱连掷六次，从初爻起，自下而上叠成六爻。老阴与老阳是动爻，阴阳互换后得到变卦。也可以摇签，从六十四卦中抽得一卦。</p>
+          <p class="quiet" data-i18n="zoneHint">悬停或点选一境。金色会亮起来。</p>
+        </header>
+        <div id="zone-mount" class="zone-mount"></div>
+        <div class="zone-tabs" role="tablist" aria-label="四境">
+          <button type="button" role="tab" data-zone="divine" aria-selected="false"><b data-i18n="zoneDivine">占卜</b><small data-i18n="zoneDivineEn">Divination</small></button>
+          <button type="button" role="tab" data-zone="natal" aria-selected="false"><b data-i18n="zoneNatal">命盘</b><small data-i18n="zoneNatalEn">Natal chart</small></button>
+          <button type="button" role="tab" data-zone="feng" aria-selected="false"><b data-i18n="zoneFeng">风水</b><small data-i18n="zoneFengEn">Feng shui</small></button>
+          <button type="button" role="tab" data-zone="spirit" aria-selected="false"><b data-i18n="zoneSpirit">通灵</b><small data-i18n="zoneSpiritEn">Stillness</small></button>
+        </div>
+        <div id="zone-panel" class="zone-panel" hidden>
+          <button class="text-back" type="button" data-action="close-zone" data-i18n="backZones">返回四境</button>
+          <div data-zone-panel="divine" hidden><div id="divine-root"></div></div>
+          <div data-zone-panel="natal" hidden>
+            <p class="eyebrow" data-i18n="zoneNatalEn">Natal chart</p>
+            <h3 data-i18n="natalTitle">命盘 · 八字与紫微</h3>
+            <p data-i18n="natalText">八字与紫微从同一次起盘进入。下一页写下出生的日期、时刻与地点，在这台浏览器里按节气排出四柱，然后走入夜室。</p>
+            <p class="quiet" data-i18n="natalNote">紫微沿用同一次出生信息。当前入口先排四柱，不会上传。</p>
+            <a class="btn gold" href="sanctuary.html" data-i18n="natalCta">开始起盘</a>
+          </div>
+          <div data-zone-panel="feng" hidden>
+            <p class="eyebrow" data-i18n="soonKicker">即将开放</p>
+            <h3 data-i18n="fengTitle">风水</h3>
+            <p data-i18n="fengSoon">这一境仍在布置。日后会谈居室、朝向与行走的路径。现在还不能勘测，也不会推荐器物。</p>
+          </div>
+          <div data-zone-panel="spirit" hidden>
+            <p class="eyebrow" data-i18n="soonKicker">即将开放</p>
+            <h3 data-i18n="spiritTitle">通灵</h3>
+            <p data-i18n="spiritSoon">这一境仍在布置。它会是一间安静的连结之所，用来把心神放回经典与呼吸里。这里没有通灵服务，也不会替你召唤什么。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="section close">
+        <p class="eyebrow reveal" data-i18n="closeKicker">CLOSING</p>
+        <h2 class="gold-text reveal" data-i18n="closeTitle">知命，而后从容</h2>
+        <p class="reveal" data-i18n="closeText">供参考与自省。不是医疗、心理、法律或财务建议。</p>
+        <a class="btn gold reveal" href="sanctuary.html" data-i18n="begin">开始起盘</a>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <b data-i18n="footerAbout">道 · DAORA</b>
+      <p data-i18n="footerPrivacy">出生信息只在起盘页保存在这台浏览器，不会上传。预约大师只记下意向，不会建立预约，也不会发送。</p>
+      <p class="credits">Design by DAORA</p>
+    </footer>
+    <a class="sticky-cta" href="sanctuary.html" data-i18n="begin">开始起盘</a>
+    <script type="module" src="/src/landing/main.js"></script>
   </body>
 </html>
