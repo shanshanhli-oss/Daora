@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { chooseLondon } from './place.mjs';
 const base=process.env.TEST_URL||'http://127.0.0.1:4173';
 console.log('[Journey] scene URL',base);
 const browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',args:['--no-sandbox','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
@@ -11,8 +12,7 @@ try{
  assert.match(await page.locator('#landing-title').innerText(),/这张签名，叫八字/);
  await page.locator('[name="birthDate"]').fill('1998-06-18');
  await page.locator('[name="birthTime"]').fill('07:30');
- await page.locator('[name="birthCity"]').fill('London');
- await page.locator('#city-suggest li').first().click();
+ await chooseLondon(page);
  await page.locator('#birth-form button[type="submit"]').click();
  await page.waitForSelector('#pillars-result:not(.hidden)');
  const pillars=await page.locator('#pillars-result').innerText();
@@ -37,7 +37,7 @@ try{
  assert.equal(room.tower,false);
  assert.equal(room.door,true);
  assert.equal(room.centre,true);
- assert.equal(room.hotspots,9);
+ assert.equal(room.hotspots,11);
  assert.equal(room.memoryHotspot,false);
  assert.equal(await page.evaluate(()=>{
   const s=window.daora.getScene();

@@ -93,7 +93,89 @@ export class SanctuaryScene {
     this.room.lights.warm.color.set(theme.warm);
     this.room.lights.warm2.color.set(theme.warm);
     this.renderer.toneMappingExposure=theme.exposure;
+    this.room.setAccent(theme.accent);
     this.inner.setTheme(element);
+  }
+
+  /**
+   * A short flight through a ring tunnel toward a dark centre.
+   * Skip, a safety timer, and reduced-motion all land in the room.
+   * hold:true keeps the frame parked for a screenshot.
+   */
+  beginTunnel(onDone, {hold=false}={}) {
+    if (this.tunnelRunning) return;
+    this.tunnelRunning=true;this.tunnelHold=hold;this.mode='tunnel';
+    this.controls.enabled=false;this.transition=null;this.keys.clear();
+    this.onTunnelDone=onDone;
+    this.savedFog=this.scene.fog;this.savedBackground=this.scene.background;
+    this.scene.fog=null;this.scene.background=new THREE.Color(0x07060c);
+    this.room.root.visible=false;
+    this.buildTunnel();
+    this.tunnelStarted=performance.now();
+    this.tunnelDuration=3200;
+    this.setTunnelProgress(hold?0.45:0);
+    clearTimeout(this.tunnelSafety);
+    if (!hold) this.tunnelSafety=setTimeout(()=>this.finishTunnel(), 6500);
+  }
+
+  buildTunnel() {
+    this.disposeTunnelMesh();
+    const group=new THREE.Group();group.name='time-tunnel';
+    for (let i=0;i<24;i++) {
+      const material=new THREE.MeshBasicMaterial({color:i%2?0xe7c98a:0x6d8cff,transparent:true,opacity:.82,side:THREE.DoubleSide});
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(1.05+(i%4)*.08,.018,8,40),material);
+      ring.position.z=-i*1.45;ring.rotation.z=i*.18;group.add(ring);
+    }
+    const count=360;const positions=new Float32Array(count*3);
+    for (let i=0;i<count;i++) {
+      const angle=i*.618*Math.PI*2;const radius=.2+(i%9)*.12;const z=-(i%24)*1.45;
+      positions[i*3]=Math.cos(angle)*radius;positions[i*3+1]=Math.sin(angle)*radius;positions[i*3+2]=z;
+    }
+    const points=new THREE.BufferGeometry();points.setAttribute('position',new THREE.BufferAttribute(positions,3));
+    group.add(new THREE.Points(points,new THREE.PointsMaterial({color:0xf2e2c0,size:.045,transparent:true,opacity:.85,depthWrite:false})));
+    const core=new THREE.Mesh(new THREE.SphereGeometry(.42,24,16),new THREE.MeshBasicMaterial({color:0x050308}));
+    core.position.z=-36;group.add(core);
+    const glow=new THREE.Mesh(new THREE.RingGeometry(.55,1.35,64),new THREE.MeshBasicMaterial({color:0xf0d7a4,side:THREE.DoubleSide,transparent:true,opacity:.92}));
+    glow.position.z=-35.4;group.add(glow);
+    this.scene.add(group);this.tunnel=group;
+  }
+
+  setTunnelProgress(amount) {
+    if (!this.tunnel) return;
+    const t=Math.min(1,Math.max(0,amount));
+    this.tunnelProgress=t;
+    const z=2.2-t*33;
+    this.camera.position.set(Math.sin(t*7)*.16,Math.cos(t*5)*.1,z);
+    this.camera.lookAt(0,0,z-8);
+    this.tunnel.rotation.z=t*1.4;
+  }
+
+  finishTunnel() {
+    if (!this.tunnelRunning && this.mode!=='tunnel') return;
+    clearTimeout(this.tunnelSafety);
+    this.tunnelRunning=false;this.tunnelHold=false;
+    this.disposeTunnelMesh();
+    this.room.root.visible=true;
+    this.scene.fog=this.savedFog||this.scene.fog;
+    this.scene.background=this.savedBackground||this.scene.background;
+    if (this.element) this.setElementTheme(this.element);
+    const done=this.onTunnelDone;this.onTunnelDone=null;
+    this.mode='room';
+    done?.();
+  }
+
+  skipTunnel() { this.finishTunnel(); }
+
+  disposeTunnelMesh() {
+    if (!this.tunnel) return;
+    this.tunnel.traverse((object)=>{
+      object.geometry?.dispose();
+      if (object.material) {
+        const list=Array.isArray(object.material)?object.material:[object.material];
+        list.forEach((material)=>material.dispose());
+      }
+    });
+    this.scene.remove(this.tunnel);this.tunnel=null;
   }
 
   enterJourney(immediate=false) {
@@ -228,7 +310,7 @@ export class SanctuaryScene {
   }
 
   updateHover() {
-    if(this.mode==='landing'||this.paused||this.passing)return;
+    if(this.mode==='landing'||this.mode==='tunnel'||this.paused||this.passing)return;
     const hit=this.findHit();
     const id=hit?.type==='hotspot'?hit.id:hit?.type==='milestone'?`milestone:${hit.id}`:hit?.type||null;
     if(id===this.hovered)return;
@@ -237,7 +319,7 @@ export class SanctuaryScene {
   }
 
   raycast() {
-    if(this.passing)return;
+    if(this.passing||this.mode==='tunnel')return;
     const hit=this.findHit();if(!hit)return;
     if(hit.type==='door'&&(this.mode==='room'||this.mode==='walk')){this.beginPassage('journey');return;}
     if(hit.type==='return'&&(this.mode==='journey'||this.mode==='journey-walk')){this.beginPassage('room');return;}
@@ -283,7 +365,16 @@ export class SanctuaryScene {
     }else if(this.mode==='walk'||this.mode==='journey-walk'){if(!this.passing)this.walk(delta);}
     else this.controls.update();
     // In orbit view, prevent zooming out through the rear walls while preserving a welcoming diorama angle.
-    if(this.mode!=='walk'&&this.mode!=='journey-walk')this.camera.position.y=Math.max(.6,this.camera.position.y);
+    if(this.mode!=='walk'&&this.mode!=='journey-walk'&&this.mode!=='tunnel')this.camera.position.y=Math.max(.6,this.camera.position.y);
+    if(this.mode==='tunnel'){
+      if(!this.tunnelHold){
+        const amount=Math.min(1,(performance.now()-this.tunnelStarted)/this.tunnelDuration);
+        this.setTunnelProgress(amount);
+        if(amount>=1)this.finishTunnel();
+      }
+      this.renderer.render(this.scene,this.camera);
+      return;
+    }
     if(this.mode==='journey'||this.mode==='journey-walk'){
       this.inner.update(this.reducedMotion?0:this.elapsed);
       this.renderer.render(this.inner.scene,this.camera);

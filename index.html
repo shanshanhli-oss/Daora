@@ -44,10 +44,27 @@
               <p class="entry-intro" data-i18n="entryIntro">出生日期、时刻与地点。四柱按节气起算，并换算为北京时间。</p>
               <label><span data-i18n="birthDate">出生日期</span><div class="input-wrap"><i data-lucide="calendar-days"></i><input name="birthDate" type="date" value="1995-05-20" required min="1900-01-01" max="2026-11-06" step="1" aria-label="Birth date" /></div></label>
               <label><span data-i18n="birthTime">出生时间</span><div class="input-wrap"><i data-lucide="clock-3"></i><input name="birthTime" type="time" value="08:30" required step="60" aria-label="Birth time" /></div></label>
-              <label class="city-field"><span data-i18n="birthPlace">出生地点</span>
-                <div class="input-wrap"><i data-lucide="map-pin"></i><input name="birthCity" type="text" value="Shanghai" required maxlength="80" placeholder="City / 城市" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggest" /></div>
+              <label class="city-field"><span data-i18n="country">国家 / 地区</span>
+                <div class="input-wrap"><i data-lucide="map-pin"></i><input name="country" type="text" required maxlength="80" placeholder="中国 / China" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="country-suggest" /></div>
+                <ul id="country-suggest" class="city-suggest hidden" role="listbox"></ul>
+              </label>
+              <label class="city-field" id="region-field"><span data-i18n="region">省 / 州</span>
+                <div class="input-wrap"><input name="region" type="text" required maxlength="80" placeholder="上海 / Shanghai" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="region-suggest" /></div>
+                <ul id="region-suggest" class="city-suggest hidden" role="listbox"></ul>
+              </label>
+              <label class="city-field"><span data-i18n="city">城市</span>
+                <div class="input-wrap"><input name="city" type="text" required maxlength="80" placeholder="城市 / City" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="city-suggest" /></div>
                 <ul id="city-suggest" class="city-suggest hidden" role="listbox"></ul>
               </label>
+              <p id="place-confirm" class="place-confirm hidden"></p>
+              <label class="check-line"><input name="trueSolar" type="checkbox" /><span data-i18n="useTrueSolar">按真太阳时起盘（只校正一次）</span></label>
+              <label><span data-i18n="genderLabel">传统历法参数</span>
+                <select name="gender" aria-label="Traditional calendar gender parameter">
+                  <option value="女">女</option>
+                  <option value="男">男</option>
+                </select>
+              </label>
+              <p class="privacy-note" data-i18n="genderNote">大运顺逆与紫微的部分排布会用到这个参数。它不是身份证明，也不会被上传。</p>
               <button class="text-button manual-toggle" type="button" data-action="toggle-manual"><span data-i18n="manualPlace">改为手动输入经纬度与时区</span></button>
               <div id="manual-place" class="manual-place hidden">
                 <div class="form-row">
@@ -73,7 +90,14 @@
           <a class="brand" href="#" data-action="home" aria-label="DAORA home"><span class="brand-seal small">道</span><span><b>DAORA</b><small data-i18n="miniDojo">我的迷你道场</small></span></a>
           <div class="room-welcome"><span class="status-dot"></span><span data-i18n="roomGreeting">晚上好，欢迎回来</span><span class="welcome-separator">/</span><span id="room-date">静夜 · 21:08</span></div>
           <div class="header-actions">
-            <div class="energy-chip" id="element-chip" title="Five-element count from the four pillars"><span class="energy-mini-ring" id="element-mark">木</span><span><small data-i18n="dominantLabel">命盘五行</small><b id="element-name">木</b></span></div>
+            <div class="energy-chip" id="element-chip" title="Room tint from the strongest weighted element"><span class="energy-mini-ring" id="element-mark">木</span><span><small data-i18n="dominantLabel">色调五行</small><b id="element-name">木</b></span></div>
+            <div class="theme-switch" role="group" aria-label="Room theme">
+              <button type="button" data-theme="金">金</button>
+              <button type="button" data-theme="木">木</button>
+              <button type="button" data-theme="水">水</button>
+              <button type="button" data-theme="火">火</button>
+              <button type="button" data-theme="土">土</button>
+            </div>
             <button class="coin-chip" data-panel="coins" aria-label="128 demo energy tokens"><i data-lucide="circle-dollar-sign"></i><b id="coin-count">128</b></button>
             <button class="icon-button language-room" data-action="language" aria-label="Switch language"><span class="lang-short">EN</span></button>
             <button class="icon-button" data-action="sound" aria-label="Enable ambient sound" aria-pressed="false"><i data-lucide="volume-x"></i></button>
@@ -86,7 +110,7 @@
             <div class="story-ornament">☯</div>
             <span class="eyebrow" data-i18n="yourSpace">YOUR SPACE</span>
             <h2 data-i18n="roomName">山居 · 静室</h2>
-            <p data-i18n="roomDescription">一盏灯，一缕香。<br>此刻，无需赶往任何地方。</p>
+            <p data-i18n="roomDescription">一盏灯，一缕香。此刻，无需赶往任何地方。</p>
             <div class="story-rule"></div>
             <div class="room-stats"><div><b>01</b><small data-i18n="daysHere">入室天数</small></div><div><b>05</b><small data-i18n="elements">五行印记</small></div><div><b id="reflection-count">03</b><small data-i18n="moments">觉察瞬间</small></div></div>
           </div>
@@ -101,6 +125,10 @@
 
         <div id="hotspots" class="hotspots" aria-label="Room objects"></div>
         <div class="room-hint"><i data-lucide="mouse"></i><span data-i18n="roomHint">拖拽环视 · 滚轮靠近 · 点击光点探索</span></div>
+        <div class="chart-toolbar" role="toolbar" aria-label="Charts">
+          <button type="button" data-space="bazi" title="探索四柱与人生节律">八字</button>
+          <button type="button" data-space="ziwei" title="查看十二宫与星曜关系">紫微</button>
+        </div>
         <div class="view-controls">
           <button class="icon-button" data-action="reset-view" aria-label="Reset room view" title="Reset view"><i data-lucide="scan"></i></button>
           <button class="icon-button" data-action="walk" aria-label="Toggle first-person walk mode" aria-pressed="false" title="Walk with WASD"><i data-lucide="footprints"></i></button>
@@ -122,9 +150,14 @@
           <button class="secondary-button" type="button" data-action="add-milestone" data-i18n="journeyAdd">添加里程碑</button>
           <button class="primary-button" type="button" data-action="leave-journey"><span data-i18n="journeyBack">返回静室</span><i data-lucide="arrow-right"></i></button>
         </aside>
-        <div class="demo-corner">DAORA · v1.2</div>
+        <div class="demo-corner">DAORA · v1.3</div>
       </section>
       <div id="passage" class="passage" aria-hidden="true"><span>内在旅程</span></div>
+      <div id="tunnel" class="tunnel hidden" aria-hidden="true">
+        <p data-i18n="tunnelCaption">穿过时间的隧道</p>
+        <button type="button" id="tunnel-skip" data-action="skip-tunnel">跳过</button>
+      </div>
+      <section id="system-space" class="system-space hidden" role="dialog" aria-modal="true" aria-labelledby="system-title"></section>
 
       <div id="panel-backdrop" class="panel-backdrop hidden" data-action="close-panel"></div>
       <aside id="detail-panel" class="detail-panel hidden" role="dialog" aria-modal="true" aria-labelledby="detail-title"></aside>

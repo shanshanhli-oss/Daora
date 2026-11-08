@@ -20,9 +20,9 @@ try {
  // Rendering is paused ONLY in the CPU-only headless test, never in production.
  // DOM/UI events remain live; one last tick pins an actual WebGL room frame.
  await page.evaluate(()=>{const s=window.daora.getScene();s.tick();s.renderer.setAnimationLoop(null);});
- assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),9);
+ assert.equal(await page.evaluate(()=>window.daoraDiagnostics().hotspots),11);
  assert.equal(await page.evaluate(()=>Boolean(window.daora.getScene().room.wallDoor)),true);
- progress('file URL, local WebGL, entry, wall door and nine hotspots passed');
+ progress('file URL, local WebGL, entry, wall door and eleven hotspots passed');
  await page.locator('[data-nav="services"]').click();
  await page.waitForSelector('.service-card');
  await page.locator('[data-service="breathe"]').click();
@@ -48,5 +48,5 @@ try {
  await page.evaluate(()=>{const s=window.daora.getScene();s.tick();});
  assert.deepEqual(errors,[]);
  assert.equal(requests.some(url=>!url.startsWith('file:')&&!url.startsWith('blob:')&&!url.startsWith('data:')&&!url.startsWith('about:')),false);
- console.log('PASS: exact rebuilt file:// HTML, embedded CSS/JS, local WebGL, room entry, 9 hotspots, wall door, inner journey, services, breathing, journal, language toggle; 0 errors, 0 network assets.');
+ console.log('PASS: exact rebuilt file:// HTML, embedded CSS/JS, local WebGL, room entry, 11 hotspots, wall door, inner journey, services, breathing, journal, language toggle; 0 errors, 0 network assets.');
 } finally {await browser.close();}

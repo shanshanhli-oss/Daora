@@ -3,8 +3,11 @@ import { createIcons, CalendarDays, Clock3, MapPin, ArrowUpRight, Sparkles, Lock
 import { SanctuaryScene } from './scene.js';
 import { copy, services, demoEntries, elementNames, elementColors } from './i18n.js';
 import { AmbientAudio } from './audio.js';
-import { computeChart, isValidTimeZone } from './bazi.js';
-import { searchCities, findCity, getCity, cityLabel } from './cities.js';
+import { computeChart, isValidTimeZone, ELEMENT_THEMES } from './bazi.js';
+import { computeZiwei, locateHoroscope } from './ziwei.js';
+import { searchCountries, searchRegions, searchCities, getCity, getCountry, shouldSkipRegion, reduceCascade, placeLabel, countryLabel, regionLabel, manualPlace, PLACE_DATASET, findExactCity, regionOf } from './geo.js';
+import { consultDraft } from './consult.js';
+import { readingHTML, baziSpaceHTML, ziweiSpaceHTML, consultHTML } from './chart-space.js';
 
 const icons={CalendarDays,Clock3,MapPin,ArrowUpRight,Sparkles,LockKeyhole,CircleDollarSign,VolumeX,Volume2,Wind,ArrowRight,Mouse,Scan,Footprints,Maximize,Minimize,House,BookOpen,CircleHelp,X,Check,Leaf,Droplets,Flame,Mountain,Feather,MoveUpRight,Pause,Play,PencilLine,ShieldCheck,RotateCcw,Eye,Heart,Info,Coins,ChevronRight,Compass};
 const $=(selector,parent=document)=>parent.querySelector(selector);
@@ -17,21 +20,31 @@ const validRecords=Array.isArray(stored.records)?stored.records.filter(entry=>en
 function cleanLog(list, limit=30){
   return Array.isArray(list)?list.filter(entry=>entry&&typeof entry.title==='string'&&typeof entry.body==='string'&&entry.body.trim()).slice(0,limit).map(entry=>({id:String(entry.id||Date.now()),date:/^\d{4}-\d{2}-\d{2}$/.test(String(entry.date||''))?entry.date:'2026-11-06',time:typeof entry.time==='string'?entry.time.slice(0,8):'',title:entry.title.slice(0,150),body:entry.body.slice(0,4000),kind:['journal','ritual','reading','note'].includes(entry.kind)?entry.kind:'note'})):[];
 }
-function defaultProfile(){
-  const city=findCity('Shanghai');
-  return {birthDate:'1995-05-20',birthTime:'08:30',mode:'city',cityId:city.id,name:city.name,nameZh:city.nameZh,country:city.country,countryZh:city.countryZh,lat:city.lat,lon:city.lon,tz:city.tz,label:cityLabel(city,'zh')};
+function profileFromCity(city,extra={}){
+  const country=getCountry(city.country),region=regionOf(city);
+  return {birthDate:'1995-05-20',birthTime:'08:30',gender:'女',trueSolar:false,fixLeap:true,mode:'city',cityId:city.id,name:city.name,zh:city.zh,nameZh:city.zh,countryCode:city.country,regionCode:city.region,country:country?.name||'',countryZh:country?.zh||'',region:region?.name||'',regionZh:region?.zh||'',lat:city.lat,lon:city.lon,tz:city.tz,label:placeLabel(city,'zh'),accuracy:PLACE_DATASET.accuracy,provenance:PLACE_DATASET.id,...extra};
 }
+function looseCity(raw){
+  const byId=getCity(raw?.cityId);if(byId)return byId;
+  const query=String(raw?.zh||raw?.nameZh||raw?.name||'').trim();if(!query)return null;
+  const countryCode=raw.countryCode||(String(raw.country||raw.countryZh||'').match(/China|中国/)? 'CN':String(raw.country||'').match(/United Kingdom|英国/)? 'GB':'');
+  if(!countryCode)return null;
+  return findExactCity({countryCode,regionCode:raw.regionCode||'',query})||findExactCity({countryCode,regionCode:'',query});
+}
+function defaultProfile(){return profileFromCity(getCity('1796236'));}
 function hydrateProfile(raw){
   const base=defaultProfile();
   if(!raw||typeof raw!=='object')return base;
   const birthDate=/^\d{4}-\d{2}-\d{2}$/.test(raw.birthDate)?raw.birthDate:base.birthDate;
   const birthTime=/^\d{2}:\d{2}/.test(String(raw.birthTime||''))?String(raw.birthTime).slice(0,5):base.birthTime;
+  const gender=raw.gender==='男'||raw.gender==='女'?raw.gender:'女';
+  const shared={birthDate,birthTime,gender,trueSolar:Boolean(raw.trueSolar),fixLeap:raw.fixLeap!==false};
   if(raw.mode==='manual'&&Number.isFinite(Number(raw.lat))&&Number.isFinite(Number(raw.lon))&&isValidTimeZone(raw.tz)){
     const lat=Number(raw.lat),lon=Number(raw.lon);
-    return {birthDate,birthTime,mode:'manual',lat,lon,tz:raw.tz,label:`${lat.toFixed(2)}, ${lon.toFixed(2)}`,name:raw.tz};
+    return {...base,...shared,mode:'manual',lat,lon,tz:raw.tz,label:`${lat.toFixed(2)}, ${lon.toFixed(2)}`,name:raw.tz,accuracy:'user-coordinates',provenance:'manual'};
   }
-  const city=getCity(raw.cityId)||findCity(raw.name)||findCity(raw.city)||findCity('Shanghai');
-  return {birthDate,birthTime,mode:'city',cityId:city.id,name:city.name,nameZh:city.nameZh,country:city.country,countryZh:city.countryZh,lat:city.lat,lon:city.lon,tz:city.tz,label:cityLabel(city,'zh')};
+  const city=looseCity(raw)||getCity('1796236');
+  return profileFromCity(city,shared);
 }
 const state={
   language:stored.language==='en'?'en':'zh',
@@ -40,14 +53,16 @@ const state={
   records:[...validRecords,...demoEntries],
   milestones:cleanLog(stored.milestones),
   rituals:cleanLog(stored.rituals),
-  chart:null,pending:null,manual:false,selectedMilestone:null,
+  chart:null,ziwei:null,pending:null,manual:false,selectedMilestone:null,selectedPalace:'命宫',
+  themeOverride:ELEMENT_THEMES[stored.themeOverride]?stored.themeOverride:null,
+  consult:stored.consult&&stored.consult.sent===false?stored.consult:null,systemSpace:null,horoscopeYear:new Date().getFullYear(),dstChoice:null,tunnelHold:false,
   entered:false,currentPanel:null,currentHotspot:null,ritual:null,ritualElapsed:0,ritualComplete:false,
 };
 const t=(key,vars={})=>{let value=copy[state.language][key]||copy.zh[key]||key;for(const[k,v]of Object.entries(vars))value=value.replaceAll(`{${k}}`,v);return value;};
 let toastTimer;
 function toast(message){const el=$('#toast');$('span',el).textContent=message;el.classList.add('visible');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('visible'),3600);}
 function iconMarkup(){createIcons({icons,attrs:{'aria-hidden':'true'}});}
-function persist(){const ok=safeStorage.write({language:state.language,profile:state.profile,coins:state.coins,records:state.records.filter(entry=>!entry.sample).slice(0,30),milestones:state.milestones.slice(0,30),rituals:state.rituals.slice(0,30)});if(!ok&&!safeStorage.warned){safeStorage.warned=true;toast(t('localStorageError'));}}
+function persist(){const ok=safeStorage.write({language:state.language,profile:state.profile,coins:state.coins,records:state.records.filter(entry=>!entry.sample).slice(0,30),milestones:state.milestones.slice(0,30),rituals:state.rituals.slice(0,30),themeOverride:state.themeOverride,consult:state.consult});if(!ok&&!safeStorage.warned){safeStorage.warned=true;toast(t('localStorageError'));}}
 function headerHTML(kicker){return `<button class="icon-button panel-close" data-action="close-panel" aria-label="${t('close')}"><i data-lucide="x"></i></button><div class="panel-kicker">${kicker}</div>`;}
 function noticeHTML(text,icon='shield-check'){return `<div class="notice"><i data-lucide="${icon}"></i><span>${text}</span></div>`;}
 function setNav(section='room'){$$('[data-nav]').forEach(button=>button.classList.toggle('active',button.dataset.nav===section));}
@@ -65,11 +80,13 @@ function translateUI(){
   $$('[data-action="language"]').forEach(element=>{if(element.classList.contains('language-button'))element.innerHTML=state.language==='zh'?'EN <span>/</span> <b>中文</b>':'<b>EN</b> <span>/</span> 中文';else element.textContent=state.language==='zh'?'EN':'中';});
   $('[name="birthDate"]').setAttribute('aria-label',t('birthDate'));
   $('[name="birthTime"]').setAttribute('aria-label',t('birthTime'));
-  $('[name="birthCity"]').setAttribute('aria-label',t('birthPlace'));
-  $('[name="birthCity"]').placeholder=state.language==='zh'?'城市 / City':'City / 城市';
+  $('[name="country"]').placeholder=state.language==='zh'?'中国 / China':'China / 中国';
+  $('[name="region"]').placeholder=state.language==='zh'?'省 / 州':'State / province';
+  $('[name="city"]').placeholder=state.language==='zh'?'城市 / City':'City / 城市';
   $('#landing').classList.toggle('lang-en',state.language==='en');
-  paintElement();
-  if(state.pending)renderPillars(state.pending.chart);
+  paintElement();paintThemeButtons();
+  if(state.pending)renderPillars(state.pending);
+  if(state.systemSpace)renderSystemSpace(state.systemSpace);
   if(!$('#journey-hud').classList.contains('hidden'))renderJourneyList();
   if(state.currentPanel)renderPanel(state.currentPanel,false);
   if(state.currentHotspot)renderHotspot(state.currentHotspot,false);
@@ -87,7 +104,7 @@ const hotspotMeta={
 function energyBarsHTML(){
   const words=['chartMetal','chartWood','chartWater','chartFire','chartEarth'];
   const counts=state.chart?elementNames.map(name=>state.chart.counts[name]||0):[0,0,0,0,0];
-  return `${state.chart?pillarsBlock(state.chart):''}<div class="element-bars">${counts.map((value,index)=>`<div class="element-row"><span style="color:${elementColors[index]}">${elementNames[index]}</span><span>${t(words[index])}</span><div class="element-track"><div style="width:${value/8*100}%;background:${elementColors[index]}"></div></div><span>${value}</span></div>`).join('')}</div><div class="reflection-quote">${state.chart?t('dominantLine',{element:`${state.chart.dominant} · ${t(words[elementNames.indexOf(state.chart.dominant)])}`}):t('chartPrompt')}</div>${noticeHTML(t('pillarNote'),'info')}`;
+  return `${state.chart?pillarsBlock(state.chart):''}<div class="element-bars">${counts.map((value,index)=>`<div class="element-row"><span style="color:${elementColors[index]}">${elementNames[index]}</span><span>${t(words[index])}</span><div class="element-track"><div style="width:${value/8*100}%;background:${elementColors[index]}"></div></div><span>${value}</span></div>`).join('')}</div><div class="reflection-quote">${state.chart?t('strongestLine',{element:state.chart.dominant}):t('chartPrompt')}</div>${noticeHTML(t('strengthNote'),'info')}`;
 }
 function pillarsBlock(chart){
   const rows=[['yearPillar',chart.pillars.year,chart.wuxing.year],['monthPillar',chart.pillars.month,chart.wuxing.month],['dayPillar',chart.pillars.day,chart.wuxing.day],['hourPillar',chart.pillars.hour,chart.wuxing.hour]];
@@ -95,6 +112,7 @@ function pillarsBlock(chart){
   return `<div class="time-pair"><div><small>${t('localTime')}</small><b>${chart.local.label}</b><em>${escapeHTML(place)} · ${chart.local.offset}</em></div><div><small>${t('beijingTime')}</small><b>${chart.beijing.label}</b><em>Asia/Shanghai · ${chart.beijing.offset}</em></div></div><div class="solar-note"><small>${t('trueSolar')}</small><b>${chart.trueSolar.label}</b><em>${t('trueSolarNote')}</em></div><div class="pillar-grid">${rows.map(([key,value,element])=>`<div class="pillar-cell"><small>${t(key)}</small><b>${value}</b><em>${element}</em></div>`).join('')}</div>`;
 }
 function renderHotspot(id,focus=true){
+  if(id==='bazi'||id==='ziwei'){openSystemSpace(id);return;}
   closeModal(false);stopRitual(false);if(scene?.mode==='walk')scene.leaveWalk();if(scene)scene.paused=true;state.currentHotspot=id;state.currentPanel=null;setNav('room');
   const backdrop=$('#panel-backdrop'),panel=$('#detail-panel');
   backdrop.classList.remove('hidden');panel.classList.remove('hidden');
@@ -132,7 +150,7 @@ function recordsHTML(){
   return `${headerHTML(t('recordsKicker'))}<h2 id="detail-title">${t('recordsTitle')}</h2><p class="panel-intro">${t('recordsIntro')}</p><button class="primary-button panel-action" data-action="new-record"><i data-lucide="pencil-line"></i>${t('recordNew')}</button><p class="privacy-note" style="margin:19px 0 28px">${t('demoRecords')}</p><div>${state.records.length?state.records.map(entry=>`<article class="record-card"><div class="record-content"><div class="record-meta"><span>${escapeHTML(entry.date)} · ${escapeHTML(entry.time)}</span><span>${entry.sample?t('markDemo'):t('markPersonal')}</span></div><h3>${entry.sample&&copy.zh[entry.title]?t(entry.title):escapeHTML(entry.title)}</h3><p>${entry.sample&&copy.zh[entry.body]?t(entry.body):escapeHTML(entry.body)}</p><small>${entry.sample?(state.language==='en'?entry.tag.split(' / ')[1]:entry.tag.split(' / ')[0]):escapeHTML(entry.tag)}</small></div></article>`).join(''):`<p class="panel-intro">${t('noRecords')}</p>`}</div><div class="panel-divider"></div>${noticeHTML(t('recordHint'),'lock-keyhole')}`;
 }
 function aboutHTML(){
-  return `${headerHTML(t('aboutKicker'))}<div class="about-mark">道</div><h2 id="detail-title">${t('aboutTitle')}</h2><p class="panel-intro">${t('aboutIntro')}</p><div class="panel-divider"></div><h3>${t('aboutWhat')}</h3><p class="panel-intro">${t('aboutText')}</p><ul class="detail-list"><li><i data-lucide="compass"></i>${t('aboutCraft')}</li><li><i data-lucide="shield-check"></i>${t('localOnly')}</li></ul><div class="panel-divider"></div><h3>${t('aboutDemo')}</h3><p class="panel-intro">${t('aboutDemoText')}</p><div class="about-version"><span>${t('aboutVersion')}</span><span>1.2.0 · 2026</span></div>`;
+  return `${headerHTML(t('aboutKicker'))}<div class="about-mark">道</div><h2 id="detail-title">${t('aboutTitle')}</h2><p class="panel-intro">${t('aboutIntro')}</p><div class="panel-divider"></div><h3>${t('aboutWhat')}</h3><p class="panel-intro">${t('aboutText')}</p><ul class="detail-list"><li><i data-lucide="compass"></i>${t('aboutCraft')}</li><li><i data-lucide="shield-check"></i>${t('localOnly')}</li></ul><div class="panel-divider"></div><h3>${t('aboutDemo')}</h3><p class="panel-intro">${t('aboutDemoText')}</p><p class="panel-intro">${t('laterPhase')}</p><p class="chart-note">lunar-javascript MIT · iztro MIT · GeoNames CC-BY 4.0</p><div class="about-version"><span>${t('aboutVersion')}</span><span>1.3.0 · 2026</span></div>`;
 }
 function coinsHTML(){
   return `${headerHTML('INNER LIGHT · 心光')}<div class="hotspot-panel-symbol"><i data-lucide="coins"></i></div><h2 id="detail-title">${t('coinsTitle')}</h2><p class="panel-intro">${t('coinsIntro')}</p><div class="panel-stat-grid"><div class="panel-stat"><b>${state.coins}</b><small>INNER LIGHT</small></div><div class="panel-stat"><b>${state.records.filter(entry=>!entry.sample).length}</b><small>${t('moments')}</small></div></div><p class="panel-intro">${t('coinsExplainer')}</p><button class="primary-button panel-action" data-panel="breathe">${t('breatheBegin')}<i data-lucide="wind"></i></button>${noticeHTML(t('demoOnly'),'info')}`;
@@ -232,6 +250,21 @@ function handleError(error){
   $('#loading').classList.add('hidden');
   if(!$('.error-screen'))$('#app').insertAdjacentHTML('beforeend',`<div class="error-screen"><div><span class="eyebrow">DAORA · A QUIET SANCTUARY</span><h1>${state.language==='zh'?'静境正在等你':'Your sanctuary is waiting'}</h1><p>${state.language==='zh'?'当前浏览器无法创建 3D 场景。请在支持 WebGL 的 Chrome、Edge、Firefox 或 Safari 中启用硬件加速后刷新。':'The 3D scene could not start. Please enable hardware acceleration in a WebGL-capable browser such as Chrome, Edge, Firefox or Safari, then refresh.'}</p><p><code>${escapeHTML(error?.message||'WebGL unavailable')}</code></p><button class="primary-button" onclick="location.reload()">${state.language==='zh'?'重新尝试':'Try again'}</button></div></div>`);
 }
+function activeTheme(){return state.themeOverride||state.chart?.dominant||'土';}
+function paintElement(){
+  const element=activeTheme();
+  const words=['chartMetal','chartWood','chartWater','chartFire','chartEarth'];
+  const index=elementNames.indexOf(element);
+  const mark=$('#element-mark'),name=$('#element-name');
+  if(mark)mark.textContent=element;
+  if(name)name.textContent=index>=0?`${element} · ${t(words[index])}`:element;
+  document.documentElement.dataset.element={金:'metal',木:'wood',水:'water',火:'fire',土:'earth'}[element]||'earth';
+  const chip=$('#element-chip');
+  if(chip)chip.title=state.themeOverride?t('themeManual'):t('themeFollows');
+}
+function paintThemeButtons(){
+  $$('[data-theme]').forEach(button=>button.classList.toggle('is-on',button.dataset.theme===activeTheme()));
+}
 function readPlace(){
   const form=$('#birth-form');
   if(!form.reportValidity())return null;
@@ -239,52 +272,132 @@ function readPlace(){
   const birthTime=$('[name="birthTime"]').value;
   const [year,month,day]=birthDate.split('-').map(Number);
   const [hour,minute]=birthTime.split(':').map(Number);
+  if(!birthTime||Number.isNaN(hour)||Number.isNaN(minute)){toast(t('yearRange'));return null;}
   if(year<1900||year>2100){toast(t('yearRange'));return null;}
+  const gender=$('[name="gender"]').value==='男'?'男':'女';
+  const trueSolar=Boolean($('[name="trueSolar"]').checked);
+  const shared={birthDate,birthTime,year,month,day,hour,minute,second:0,gender,trueSolar,fixLeap:true,dstChoice:state.dstChoice};
   if(state.manual){
-    const lat=Number($('[name="latitude"]').value),lon=Number($('[name="longitude"]').value),tz=$('[name="timezone"]').value.trim();
-    if(!Number.isFinite(lat)||lat<-90||lat>90||!Number.isFinite(lon)||lon<-180||lon>180||!isValidTimeZone(tz)){toast(t('placeInvalid'));return null;}
-    return {birthDate,birthTime,year,month,day,hour,minute,second:0,mode:'manual',lat,lon,tz,longitude:lon,timeZone:tz,label:`${lat.toFixed(2)}, ${lon.toFixed(2)}`,name:tz};
+    try{
+      const place=manualPlace({lat:$('[name="latitude"]').value,lon:$('[name="longitude"]').value,timeZone:$('[name="timezone"]').value.trim()});
+      return {...shared,...place,longitude:place.lon,timeZone:place.tz,label:`${place.lat.toFixed(2)}, ${place.lon.toFixed(2)}`,name:place.tz};
+    }catch{toast(t('placeInvalid'));return null;}
   }
-  const input=$('[name="birthCity"]');
-  const selected=getCity(input.dataset.cityId);
-  const typed=input.value.trim();
-  const selectedMatches=selected&&[selected.name,selected.nameZh,cityLabel(selected,'en'),cityLabel(selected,'zh')].includes(typed);
-  const city=selectedMatches?selected:findCity(typed);
+  const country=getCountry($('[name="country"]').dataset.code||'');
+  if(!country){toast(t('chooseCountry'));return null;}
+  const skip=shouldSkipRegion(country.code);
+  const regionCode=$('[name="region"]').dataset.code||'';
+  if(!skip&&!regionCode){toast(t('chooseRegion'));return null;}
+  const selected=getCity($('[name="city"]').dataset.cityId||'');
+  const typed=$('[name="city"]').value.trim();
+  const label=selected?placeLabel(selected,state.language):'';
+  const matches=selected&&(typed===label||typed===selected.name||typed===selected.zh||typed===selected.ascii);
+  const city=matches?selected:findExactCity({countryCode:country.code,regionCode:skip?'':regionCode,query:typed});
   if(!city){toast(t('chooseCity'));return null;}
-  return {birthDate,birthTime,year,month,day,hour,minute,second:0,mode:'city',cityId:city.id,name:city.name,nameZh:city.nameZh,country:city.country,countryZh:city.countryZh,lat:city.lat,lon:city.lon,tz:city.tz,longitude:city.lon,timeZone:city.tz,label:cityLabel(city,state.language)};
+  return {...shared,mode:'city',cityId:city.id,name:city.name,zh:city.zh,nameZh:city.zh,countryCode:city.country,regionCode:city.region,country:country.name,countryZh:country.zh,lat:city.lat,lon:city.lon,tz:city.tz,longitude:city.lon,timeZone:city.tz,label:placeLabel(city,state.language),accuracy:PLACE_DATASET.accuracy,provenance:PLACE_DATASET.id};
 }
-function renderPillars(chart){
-  const words=['chartMetal','chartWood','chartWater','chartFire','chartEarth'];
-  const counts=elementNames.map(name=>chart.counts[name]||0);
+function renderPillars(pending){
+  const {chart,ziwei}=pending;
   $('#birth-form').classList.add('hidden');
   const root=$('#pillars-result');
   root.classList.remove('hidden');
-  root.innerHTML=`<div class="card-topline"><span>四柱 · FOUR PILLARS</span><span>✦</span></div><h2>${t('chartTitle')}</h2>${pillarsBlock(chart)}<div class="element-bars">${counts.map((value,index)=>`<div class="element-row"><span style="color:${elementColors[index]}">${elementNames[index]}</span><span>${t(words[index])}</span><div class="element-track"><div style="width:${value/8*100}%;background:${elementColors[index]}"></div></div><span>${value}</span></div>`).join('')}</div><p class="dominant-line">${t('dominantLine',{element:`${chart.dominant} · ${t(words[elementNames.indexOf(chart.dominant)])}`})}</p><p class="pillar-note">${t('pillarNote')}</p><button class="primary-button enter-button" type="button" data-action="confirm-entry"><span>${t('enterSanctuary')}</span></button><button class="text-button" type="button" data-action="edit-birth">${t('recalculate')}</button>`;
+  root.innerHTML=readingHTML({chart,ziwei,t,escapeHTML,elementNames});
+  iconMarkup();
 }
-function paintElement(){
-  if(!state.chart)return;
-  const words=['chartMetal','chartWood','chartWater','chartFire','chartEarth'];
-  const index=elementNames.indexOf(state.chart.dominant);
-  $('#element-mark').textContent=state.chart.dominant;
-  $('#element-name').textContent=`${state.chart.dominant} · ${t(words[index])}`;
-  document.documentElement.dataset.element={金:'metal',木:'wood',水:'water',火:'fire',土:'earth'}[state.chart.dominant]||'earth';
+function showDstChoice(error){
+  const box=$('#dst-choice')||document.createElement('div');
+  box.id='dst-choice';box.className='dst-choice';
+  box.innerHTML=`<p>${t('dstAmbiguous')}</p><button type="button" data-dst="earlier">${t('dstEarlier')}</button><button type="button" data-dst="later">${t('dstLater')}</button>`;
+  $('#birth-form').append(box);
 }
-function applyEntry(place,chart){
+function buildCharts(place){
+  const chart=computeChart({...place,longitude:place.lon,timeZone:place.tz,useTrueSolar:place.trueSolar,gender:place.gender,dstChoice:place.dstChoice});
+  const clock=chart.pillarClock;
+  const ziwei=computeZiwei({...clock,gender:place.gender,fixLeap:place.fixLeap!==false,language:'zh-CN'});
+  const horoscope=ziwei.available?locateHoroscope({...clock,gender:place.gender,fixLeap:place.fixLeap!==false},`${state.horoscopeYear}-01-01`):null;
+  return {chart,ziwei,horoscope};
+}
+function revealRoom(){
+  state.entered=true;persist();paintElement();paintThemeButtons();
+  closePanel(false);closeModal(false);closeSystemSpace(false);
+  $('#birth-form').classList.remove('hidden');$('#pillars-result').classList.add('hidden');$('#pillars-result').replaceChildren();
+  $('#landing').classList.add('hidden');$('#tunnel').classList.add('hidden');$('#tunnel').setAttribute('aria-hidden','true');
+  $('#room-ui').classList.remove('hidden');$('#room-ui').classList.add('enter-immediate');
+  if(scene){scene.paused=false;scene.setRoomCamera(true);}
+  refreshCounts();updateRoomDate();
+}
+function beginMindJourney(place,built){
   const now=formatDate();
   state.profile=place;
-  state.chart={...chart,computedDate:now.date,computedTime:now.time};
-  state.pending=null;state.entered=true;persist();paintElement();
-  scene.setElementTheme(chart.dominant);
-  closePanel(false);closeModal(false);
-  $('#birth-form').classList.remove('hidden');$('#pillars-result').classList.add('hidden');$('#pillars-result').replaceChildren();
-  $('#landing').classList.add('hidden');$('#room-ui').classList.remove('hidden');$('#room-ui').classList.add('enter-immediate');
-  scene.paused=false;scene.setRoomCamera();refreshCounts();updateRoomDate();
+  state.chart={...built.chart,computedDate:now.date,computedTime:now.time};
+  state.ziwei=built.ziwei;state.horoscope=built.horoscope;state.pending=null;
+  const theme=activeTheme();
+  paintElement();
+  if(!scene){revealRoom();toast(t('welcomeName',{city:place.label}));return;}
+  scene.setElementTheme(theme);
+  $('#landing').classList.add('hidden');
+  $('#tunnel').classList.remove('hidden');$('#tunnel').setAttribute('aria-hidden','false');
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduced){
+    $('#passage').classList.add('active');
+    window.setTimeout(()=>{$('#passage').classList.remove('active');revealRoom();toast(t('welcomeName',{city:place.label}));},reduced?80:80);
+    return;
+  }
+  scene.beginTunnel(()=>{revealRoom();toast(t('welcomeName',{city:place.label}));},{hold:state.tunnelHold});
 }
 function enterRoom(){
-  if(!scene)return;
   const place=readPlace();if(!place)return;
-  let chart;try{chart=computeChart(place);}catch(error){console.error(error);toast(t('placeInvalid'));return;}
-  applyEntry(place,chart);
+  let built;try{built=buildCharts(place);}catch(error){
+    if(error.code==='ambiguous'){showDstChoice(error);return;}
+    if(error.code==='nonexistent'){toast(t('dstGap'));return;}
+    console.error(error);toast(t('placeInvalid'));return;
+  }
+  state.dstChoice=null;
+  beginMindJourney(place,built);
+}
+function openSystemSpace(id){
+  if(!state.chart){toast(t('chartPrompt'));return;}
+  state.systemSpace=id;state.selectedPalace=id==='ziwei'?state.selectedPalace||'命宫':'命宫';
+  if(scene&&scene.mode==='room'){
+    state.savedView={position:scene.camera.position.clone(),target:scene.controls.target.clone()};
+    scene.focusHotspot(id);
+  }
+  renderSystemSpace(id);
+}
+function renderSystemSpace(id){
+  const root=$('#system-space');if(!root)return;
+  root.classList.remove('hidden');
+  const form=consultHTML({t,draft:state.consult,timezone:state.profile.tz,system:id,escapeHTML});
+  root.innerHTML=id==='ziwei'
+    ?ziweiSpaceHTML({ziwei:state.ziwei,selected:state.selectedPalace,t,escapeHTML,language:state.language,consultHTML:form,horoscope:state.horoscope})
+    :baziSpaceHTML({chart:state.chart,t,escapeHTML,consultHTML:form});
+  iconMarkup();
+  root.querySelector('[name="horoscopeYear"]')?.addEventListener('change',event=>{
+    const year=Number(event.target.value);
+    if(!state.chart||year<1900||year>2100)return;
+    state.horoscopeYear=year;
+    const clock=state.chart.pillarClock;
+    state.horoscope=locateHoroscope({...clock,gender:state.profile.gender,fixLeap:state.profile.fixLeap!==false},`${year}-01-01`);
+    renderSystemSpace('ziwei');
+  });
+  root.querySelector('.panel-close')?.focus({preventScroll:true});
+}
+function closeSystemSpace(restore=true){
+  const root=$('#system-space');if(!root||root.classList.contains('hidden'))return;
+  root.classList.add('hidden');root.replaceChildren();state.systemSpace=null;
+  if(restore&&scene&&state.savedView&&scene.mode==='room')scene.animateCamera(state.savedView.position,state.savedView.target,700);
+}
+function saveConsult(form){
+  const data=new FormData(form);
+  state.consult={...consultDraft({system:data.get('system'),topic:data.get('topic'),language:data.get('language'),timezone:data.get('timezone'),times:data.get('times')}),savedAt:new Date().toISOString()};
+  persist();
+  if(state.systemSpace)renderSystemSpace(state.systemSpace);
+  toast(t('unsent'));
+}
+function exportConsult(){
+  if(!state.consult)return;
+  const blob=new Blob([JSON.stringify(state.consult,null,2)],{type:'application/json'});
+  const link=document.createElement('a');link.href=URL.createObjectURL(blob);link.download='daora-consult-draft.json';link.click();URL.revokeObjectURL(link.href);
 }
 function showJourney(on){
   $('#room-ui').classList.toggle('in-journey',on);
@@ -324,28 +437,93 @@ function setManual(on){
   state.manual=on;
   $('#manual-place').classList.toggle('hidden',!on);
   for(const name of ['latitude','longitude','timezone']){const field=$(`[name="${name}"]`);field.disabled=!on;field.required=on;}
-  const city=$('[name="birthCity"]');city.disabled=on;city.required=!on;
+  for(const name of ['country','region','city']){const field=$(`[name="${name}"]`);if(!field)continue;field.disabled=on;field.required=on?false:name!=='region'||!shouldSkipRegion($('[name="country"]').dataset.code||'');}
+  const region=$('[name="region"]');if(region)region.required=!on&&!shouldSkipRegion($('[name="country"]').dataset.code||state.profile.countryCode||'');
   const label=$('[data-action="toggle-manual"] [data-i18n]');
   label.dataset.i18n=on?'cityPlace':'manualPlace';label.textContent=t(label.dataset.i18n);
+}
+function syncRegionField(){
+  const code=$('[name="country"]').dataset.code||'';
+  const skip=!code||shouldSkipRegion(code);
+  $('#region-field').classList.toggle('hidden',skip);
+  const region=$('[name="region"]');
+  region.required=!state.manual&&!skip;
+  region.disabled=state.manual||skip;
+  if(skip){region.value='';region.dataset.code='';}
 }
 function fillBirthForm(){
   const profile=state.profile;
   $('[name="birthDate"]').value=profile.birthDate;
   $('[name="birthTime"]').value=profile.birthTime;
-  if(profile.mode==='manual'){setManual(true);$('[name="latitude"]').value=profile.lat;$('[name="longitude"]').value=profile.lon;$('[name="timezone"]').value=profile.tz;}
-  else {$('[name="birthCity"]').value=state.language==='zh'?profile.nameZh||profile.name:profile.name;$('[name="birthCity"]').dataset.cityId=profile.cityId||'';}
+  $('[name="gender"]').value=profile.gender==='男'?'男':'女';
+  $('[name="trueSolar"]').checked=Boolean(profile.trueSolar);
+  if(profile.mode==='manual'){setManual(true);$('[name="latitude"]').value=profile.lat;$('[name="longitude"]').value=profile.lon;$('[name="timezone"]').value=profile.tz;return;}
+  const country=getCountry(profile.countryCode);
+  const region=profile.regionCode?{code:profile.regionCode,name:profile.region,zh:profile.regionZh}:null;
+  $('[name="country"]').value=country?countryLabel(country,state.language):'';
+  $('[name="country"]').dataset.code=profile.countryCode||'';
+  syncRegionField();
+  if(region&&!shouldSkipRegion(profile.countryCode)){
+    $('[name="region"]').value=regionLabel(region,state.language);
+    $('[name="region"]').dataset.code=region.code;
+  }
+  const city=getCity(profile.cityId);
+  $('[name="city"]').value=city?placeLabel(city,state.language):profile.label||'';
+  $('[name="city"]').dataset.cityId=profile.cityId||'';
+  showPlaceConfirm(city);
+}
+function closeSuggests(){for(const id of ['country-suggest','region-suggest','city-suggest']){const list=$('#'+id);list?.classList.add('hidden');}}
+function showSuggest(input,list,html){
+  closeSuggests();
+  if(!html){list.classList.add('hidden');input.setAttribute('aria-expanded','false');return;}
+  list.innerHTML=html;list.classList.remove('hidden');input.setAttribute('aria-expanded','true');
+}
+function renderCountrySuggestions(){
+  const input=$('[name="country"]'),matches=searchCountries(input.value,8);
+  showSuggest(input,$('#country-suggest'),input.value.trim()&&matches.length?matches.map(country=>`<li role="option" data-country="${escapeHTML(country.code)}">${escapeHTML(countryLabel(country,state.language))}</li>`).join(''):'');
+}
+function renderRegionSuggestions(){
+  const input=$('[name="region"]'),code=$('[name="country"]').dataset.code||'',matches=searchRegions(code,input.value,8);
+  showSuggest(input,$('#region-suggest'),input.value.trim()&&matches.length?matches.map(region=>`<li role="option" data-region="${escapeHTML(region.code)}">${escapeHTML(regionLabel(region,state.language))}</li>`).join(''):'');
 }
 function renderSuggestions(){
-  const input=$('[name="birthCity"]'),list=$('#city-suggest'),matches=searchCities(input.value,8);
-  if(!input.value.trim()||!matches.length){list.classList.add('hidden');input.setAttribute('aria-expanded','false');return;}
-  list.classList.remove('hidden');input.setAttribute('aria-expanded','true');
-  list.innerHTML=matches.map(city=>`<li role="option" data-city="${escapeHTML(city.id)}">${escapeHTML(cityLabel(city,state.language))}</li>`).join('');
+  const input=$('[name="city"]'),code=$('[name="country"]').dataset.code||'';
+  const region=shouldSkipRegion(code)?'':($('[name="region"]').dataset.code||'');
+  if(!code||(!region&&!shouldSkipRegion(code))){closeSuggests();return;}
+  const matches=searchCities({countryCode:code,regionCode:region,query:input.value,limit:8});
+  showSuggest(input,$('#city-suggest'),input.value.trim()&&matches.length?matches.map(city=>`<li role="option" data-city="${escapeHTML(city.id)}">${escapeHTML(placeLabel(city,state.language))}<small>${city.lat.toFixed(2)}, ${city.lon.toFixed(2)} · ${escapeHTML(city.tz)}</small></li>`).join(''):'');
+}
+function showPlaceConfirm(city){
+  const note=$('#place-confirm');if(!note)return;
+  if(!city){note.classList.add('hidden');note.textContent='';return;}
+  note.classList.remove('hidden');
+  note.textContent=`${placeLabel(city,state.language)} · ${city.lat.toFixed(5)}, ${city.lon.toFixed(5)} · ${city.tz}. ${t('placeAccuracy')}`;
+}
+function chooseCountry(code){
+  const country=getCountry(code);if(!country)return;
+  const next=reduceCascade({countryCode:$('[name="country"]').dataset.code||'',regionCode:$('[name="region"]').dataset.code||'',cityId:$('[name="city"]').dataset.cityId||'',birthday:$('[name="birthDate"]').value,birthTime:$('[name="birthTime"]').value},{type:'country',code});
+  $('[name="country"]').value=countryLabel(country,state.language);$('[name="country"]').dataset.code=country.code;
+  $('[name="region"]').value='';$('[name="region"]').dataset.code='';
+  $('[name="city"]').value='';$('[name="city"]').dataset.cityId='';
+  $('[name="birthDate"]').value=next.birthday;$('[name="birthTime"]').value=next.birthTime;
+  syncRegionField();showPlaceConfirm(null);closeSuggests();
+}
+function chooseRegion(code){
+  const region=(searchRegions($('[name="country"]').dataset.code||'',code,20).find(item=>item.code===code))||null;
+  const listRegion=region||{code,name:code,zh:''};
+  const next=reduceCascade({countryCode:$('[name="country"]').dataset.code||'',regionCode:'',cityId:$('[name="city"]').dataset.cityId||'',birthday:$('[name="birthDate"]').value,birthTime:$('[name="birthTime"]').value},{type:'region',code});
+  $('[name="region"]').value=regionLabel(listRegion,state.language);$('[name="region"]').dataset.code=code;
+  $('[name="city"]').value='';$('[name="city"]').dataset.cityId='';
+  $('[name="birthDate"]').value=next.birthday;$('[name="birthTime"]').value=next.birthTime;
+  showPlaceConfirm(null);closeSuggests();
 }
 function chooseCity(id){
   const city=getCity(id);if(!city)return;
-  const input=$('[name="birthCity"]');
-  input.value=cityLabel(city,state.language);input.dataset.cityId=city.id;
-  $('#city-suggest').classList.add('hidden');input.setAttribute('aria-expanded','false');
+  const next=reduceCascade({countryCode:city.country,regionCode:city.region,cityId:'',birthday:$('[name="birthDate"]').value,birthTime:$('[name="birthTime"]').value},{type:'city',id});
+  const input=$('[name="city"]');
+  input.value=placeLabel(city,state.language);input.dataset.cityId=city.id;
+  $('[name="birthDate"]').value=next.birthday;$('[name="birthTime"]').value=next.birthTime;
+  showPlaceConfirm(city);closeSuggests();input.setAttribute('aria-expanded','false');
 }
 
 function updateRoomDate(){
@@ -374,7 +552,8 @@ function onHover(id){
 }
 function handleService(id){
   if(id==='breathe'){openBreath();return;}
-  if(id==='elements'||id==='bazi'){renderPanel('chart');return;}
+  if(id==='elements'){renderPanel('chart');return;}
+  if(id==='bazi'){openSystemSpace('bazi');return;}
   if(id==='tea'){closePanel(false);renderHotspot('tea');return;}
   showModal(`<button class="icon-button panel-close" data-action="close-modal" aria-label="${t('close')}"><i data-lucide="x"></i></button><span class="eyebrow">SERVICE CONCEPT · DEMO</span><div class="about-mark">辰</div><h2 id="modal-title">${t('serviceFourTitle')}</h2><p>${t('serviceFourText')}</p><div class="panel-divider"></div><p>${t('chartExploreText')}</p>${noticeHTML(t('demoReadonly'),'info')}<button class="primary-button" data-action="close-modal">${t('breatheClose')}<i data-lucide="arrow-right"></i></button>`);
 }
@@ -383,11 +562,19 @@ function bindUI(){
   $('#birth-form').addEventListener('submit',event=>{
     event.preventDefault();
     const place=readPlace();if(!place)return;
-    let chart;try{chart=computeChart(place);}catch(error){console.error(error);toast(t('placeInvalid'));return;}
-    state.pending={place,chart};renderPillars(chart);
+    let built;try{built=buildCharts(place);}catch(error){
+      if(error.code==='ambiguous'){showDstChoice(error);return;}
+      if(error.code==='nonexistent'){toast(t('dstGap'));return;}
+      console.error(error);toast(t('placeInvalid'));return;
+    }
+    state.pending={place,...built};renderPillars(state.pending);
   });
+  $('#country-suggest').addEventListener('click',event=>{const option=event.target.closest('[data-country]');if(option)chooseCountry(option.dataset.country);});
+  $('#region-suggest').addEventListener('click',event=>{const option=event.target.closest('[data-region]');if(option)chooseRegion(option.dataset.region);});
   $('#city-suggest').addEventListener('click',event=>{const option=event.target.closest('[data-city]');if(option)chooseCity(option.dataset.city);});
-  $('[name="birthCity"]').addEventListener('input',()=>{$('[name="birthCity"]').dataset.cityId='';renderSuggestions();});
+  $('[name="country"]').addEventListener('input',()=>{$('[name="country"]').dataset.code='';$('[name="region"]').value='';$('[name="region"]').dataset.code='';$('[name="city"]').value='';$('[name="city"]').dataset.cityId='';syncRegionField();showPlaceConfirm(null);renderCountrySuggestions();});
+  $('[name="region"]').addEventListener('input',()=>{$('[name="region"]').dataset.code='';$('[name="city"]').value='';$('[name="city"]').dataset.cityId='';showPlaceConfirm(null);renderRegionSuggestions();});
+  $('[name="city"]').addEventListener('input',()=>{$('[name="city"]').dataset.cityId='';showPlaceConfirm(null);renderSuggestions();});
   $('#journey-list').addEventListener('click',event=>{
     const item=event.target.closest('[data-milestone]');if(!item)return;
     state.selectedMilestone=item.dataset.milestone;renderJourneyList();
@@ -398,6 +585,10 @@ function bindUI(){
     const button=event.target.closest('button,a[data-action],a[data-panel]');if(!button)return;
     if(button.matches('a[href="#"]'))event.preventDefault();
     const action=button.dataset.action;
+    if(button.dataset.theme){state.themeOverride=button.dataset.theme;persist();paintElement();paintThemeButtons();scene?.setElementTheme(activeTheme());return;}
+    if(button.dataset.space){openSystemSpace(button.dataset.space);return;}
+    if(button.dataset.palace){state.selectedPalace=button.dataset.palace;if(state.systemSpace)renderSystemSpace(state.systemSpace);return;}
+    if(button.dataset.dst){state.dstChoice=button.dataset.dst;$('#dst-choice')?.remove();$('#birth-form').requestSubmit();return;}
     if(button.dataset.nav){renderPanel(button.dataset.nav);return;}
     if(button.dataset.panel){renderPanel(button.dataset.panel);return;}
     if(button.dataset.service){handleService(button.dataset.service);return;}
@@ -410,8 +601,12 @@ function bindUI(){
       showJourney(false);scene.setLandingCamera();$('#landing').classList.remove('hidden');$('#room-ui').classList.add('hidden');
     }
     else if(action==='toggle-manual')setManual(!state.manual);
-    else if(action==='confirm-entry'){if(state.pending){applyEntry(state.pending.place,state.pending.chart);toast(t('welcomeName',{city:state.profile.label}));}}
+    else if(action==='confirm-entry'){if(state.pending)beginMindJourney(state.pending.place,state.pending);}
+    else if(action==='skip-tunnel')scene?.skipTunnel();
     else if(action==='edit-birth'){$('#pillars-result').classList.add('hidden');$('#birth-form').classList.remove('hidden');state.pending=null;}
+    else if(action==='close-space')closeSystemSpace();
+    else if(action==='export-consult')exportConsult();
+    else if(action==='delete-consult'){state.consult=null;persist();if(state.systemSpace)renderSystemSpace(state.systemSpace);}
     else if(action==='leave-journey')scene.beginPassage('room');
     else if(action==='add-milestone')openMilestone();
     else if(action==='close-panel')closePanel();
@@ -434,6 +629,7 @@ function bindUI(){
     }
   });
   document.addEventListener('submit',event=>{
+    if(event.target.id==='consult-form'){event.preventDefault();saveConsult(event.target);return;}
     if(event.target.id==='milestone-form'){event.preventDefault();saveMilestone();return;}
     if(event.target.id!=='reflection-form')return;event.preventDefault();
     const inMemory=$('#reflection-form').dataset.context==='memory';
@@ -444,13 +640,15 @@ function bindUI(){
     }
   });
   document.addEventListener('keydown',event=>{
-    if(event.key==='Escape'){
+      if(event.key==='Escape'){
+      if(scene?.mode==='tunnel'){scene.skipTunnel();return;}
+      if(!$('#system-space').classList.contains('hidden')){event.stopPropagation();closeSystemSpace();return;}
       if(!$('#modal-backdrop').classList.contains('hidden')){event.stopPropagation();closeModal();}
       else if(!$('#panel-backdrop').classList.contains('hidden'))closePanel();
     }
     // A small, explicit trap keeps keyboard focus inside the active dialog.
     if(event.key==='Tab'){
-      const container=!$('#modal-backdrop').classList.contains('hidden')?$('#modal'):!$('#panel-backdrop').classList.contains('hidden')?$('#detail-panel'):null;
+      const container=!$('#system-space').classList.contains('hidden')?$('#system-space'):!$('#modal-backdrop').classList.contains('hidden')?$('#modal'):!$('#panel-backdrop').classList.contains('hidden')?$('#detail-panel'):null;
       if(!container)return;
       const items=$$('button, input, textarea, [tabindex="0"], a[href]',container).filter(el=>!el.disabled&&!el.hidden);
       if(!items.length)return;
@@ -501,9 +699,9 @@ function start(){
     $('#landing').classList.remove('hidden');
   }));
   bindUI();
-  window.daoraDiagnostics=()=>scene?{mode:scene.mode,drawCalls:scene.renderer.info.render.calls,triangles:scene.renderer.info.render.triangles,geometries:scene.renderer.info.memory.geometries,textures:scene.renderer.info.memory.textures,position:scene.camera.position.toArray().map(value=>Number(value.toFixed(2))),webgl:scene.renderer.capabilities.isWebGL2?'WebGL2':'WebGL1',hotspots:scene.room.hotspotData.length,staticBatches:scene.room.staticBatchStats,entered:state.entered,language:state.language,localRecords:state.records.filter(entry=>!entry.sample).length,element:state.chart?.dominant||null,door:Boolean(scene.room.wallDoor)}:null;
+  window.daoraDiagnostics=()=>scene?{mode:scene.mode,drawCalls:scene.renderer.info.render.calls,triangles:scene.renderer.info.render.triangles,geometries:scene.renderer.info.memory.geometries,textures:scene.renderer.info.memory.textures,position:scene.camera.position.toArray().map(value=>Number(value.toFixed(2))),webgl:scene.renderer.capabilities.isWebGL2?'WebGL2':'WebGL1',hotspots:scene.room.hotspotData.length,staticBatches:scene.room.staticBatchStats,entered:state.entered,language:state.language,localRecords:state.records.filter(entry=>!entry.sample).length,element:state.chart?.dominant||null,theme:activeTheme(),door:Boolean(scene.room.wallDoor)}:{entered:state.entered,element:state.chart?.dominant||null,theme:activeTheme(),language:state.language};
   // Test-only local controls. No network endpoint; available solely on this page instance.
-  window.daora={getState:()=>({...state,ritual:undefined}),getScene:()=>scene,closePanel,openPanel:renderPanel,enterRoom:()=>enterRoom(),setLanguage:language=>{if(['en','zh'].includes(language)){state.language=language;translateUI();updateRoomDate();}},startBreath:openBreath,finishBreath,showJourney,enterJourney:()=>{scene.enterJourney(true);showJourney(true);},leaveJourney:()=>{scene.leaveJourney(true);showJourney(false);}};
+  window.daora={getState:()=>({...state,ritual:undefined}),getScene:()=>scene,closePanel,openPanel:renderPanel,enterRoom:()=>{state.tunnelHold=false;const place=readPlace();if(!place)return;const built=buildCharts(place);state.profile=place;state.chart={...built.chart,computedDate:formatDate().date,computedTime:formatDate().time};state.ziwei=built.ziwei;state.horoscope=built.horoscope;if(scene)scene.setElementTheme(activeTheme());revealRoom();},setLanguage:language=>{if(['en','zh'].includes(language)){state.language=language;translateUI();updateRoomDate();}},startBreath:openBreath,finishBreath,showJourney,enterJourney:()=>{scene.enterJourney(true);showJourney(true);},leaveJourney:()=>{scene.leaveJourney(true);showJourney(false);},openSpace:openSystemSpace,setTheme:(element)=>{if(!ELEMENT_THEMES[element])return;state.themeOverride=element;paintElement();paintThemeButtons();scene?.setElementTheme(element);},holdTunnel:(on)=>{state.tunnelHold=Boolean(on);}};
 }
 // Scene creation is intentionally deferred until application bootstrap; no import-time WebGL side effects.
 try{start();}catch(error){console.error('DAORA UI startup failed',error);handleError(error);}
