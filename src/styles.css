@@ -541,4 +541,11 @@ html[data-element="earth"] .scene-shade { background: radial-gradient(ellipse at
   .chart-toolbar { left: 12px; bottom: 96px; }
   .room-welcome { display: none; }
   .theme-switch button { width: 22px; height: 22px; font-size: 11px; padding: 0; }
+  .prop-hint { bottom: 88px; font-size: 12px; }
+}
+.prop-hint { position: fixed; z-index: 40; left: 50%; bottom: 108px; transform: translateX(-50%); max-width: min(420px, calc(100% - 28px)); padding: 10px 14px; border: 1px solid rgba(214, 176, 96, .45); background: rgba(12, 10, 14, .88); color: #f6e7c4; font-size: 13px; letter-spacing: .04em; pointer-events: none; }
+.reading-card { margin-top: 14px; padding: 12px 14px; border: 1px solid rgba(198, 168, 112, .35); background: rgba(20, 16, 18, .55); }
+.reading-card p { white-space: pre-wrap; }
+@media (prefers-reduced-motion: reduce) {
+  .loading-line span, .ritual-orb { animation: none; transition: none; }
 }

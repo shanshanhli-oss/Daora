@@ -4,11 +4,12 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { DojoRoom } from './room.js';
 import { InnerJourney } from './inner-journey.js';
 import { ELEMENT_THEMES } from './bazi.js';
+import { chooseSnap } from './placement.js';
 
 export class SanctuaryScene {
-  constructor({container,onHotspot,onHover,onWalkChange,onError,onMilestone,onPassage}) {
+  constructor({container,onHotspot,onHover,onWalkChange,onError,onMilestone,onPassage,onProp}) {
     this.container=container;this.onHotspot=onHotspot;this.onHover=onHover;this.onWalkChange=onWalkChange;this.onError=onError;
-    this.onMilestone=onMilestone;this.onPassage=onPassage;this.passing=false;
+    this.onMilestone=onMilestone;this.onPassage=onPassage;this.onProp=onProp;this.passing=false;this.drag=null;this.hoveredProp=null;
     this.active=false;this.mode='landing';this.keys=new Set();this.pointer=new THREE.Vector2();this.raycaster=new THREE.Raycaster();
     this.hovered=null;this.clock=new THREE.Clock();this.elapsed=0;this.walkYaw=0;this.walkPitch=-.02;
     this.transition=null;this.paused=false;this.reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -37,7 +38,14 @@ export class SanctuaryScene {
     this.controls.enablePan=false;this.controls.target.set(0,1.05,-.4);
     this.room=new DojoRoom(this.scene,this.renderer);
     this.inner=new InnerJourney(this.environmentTarget.texture);
-    this.setLandingCamera(true);
+    this.propLight=new THREE.PointLight(0xf6e2a8,0,2.2,2);
+    this.scene.add(this.propLight);
+    if (this.reducedMotion) this.setLandingCamera(true);
+    else {
+      this.camera.position.set(16.5,10.5,18);
+      this.controls.target.set(0,1.4,-0.2);
+      this.setLandingCamera(false);
+    }
     this.bindEvents();this.resize();
     this.renderer.setAnimationLoop(()=>this.tick());
     this.renderer.domElement.dataset.sceneReady='true';
@@ -383,10 +391,31 @@ export class SanctuaryScene {
     this.onResize=()=>this.resize();window.addEventListener('resize',this.onResize);
     this.renderer.domElement.addEventListener('pointerdown',event=>{
       this.pointerDown={x:event.clientX,y:event.clientY,time:performance.now(),lastX:event.clientX,lastY:event.clientY};
+      this.setPointer(event);
+      if(this.mode==='room'&&!this.paused&&!this.passing){
+        const propHit=this.findPropHit();
+        if(propHit){
+          this.drag={prop:propHit.prop,x:event.clientX,y:event.clientY,moved:false};
+          this.controls.enabled=false;
+          try{this.renderer.domElement.setPointerCapture(event.pointerId);}catch{/* ignore */}
+          return;
+        }
+      }
       if(this.mode==='walk'){this.renderer.domElement.setPointerCapture(event.pointerId);}
     });
     this.renderer.domElement.addEventListener('pointermove',event=>{
       this.setPointer(event);
+      if(this.drag){
+        const moved=Math.hypot(event.clientX-this.drag.x,event.clientY-this.drag.y);
+        if(moved>6)this.drag.moved=true;
+        if(this.drag.moved){
+          this.raycaster.setFromCamera(this.pointer,this.camera);
+          const snap=chooseSnap(this.raycaster.ray.origin,this.raycaster.ray.direction,this.room.worldShelves());
+          if(snap)this.drag.prop.group.position.set(snap.x,snap.y,snap.z);
+          this.paintPropGlow(this.drag.prop);
+        }
+        return;
+      }
       if(this.mode==='walk'&&this.pointerDown) {
         this.walkYaw-=(event.clientX-this.pointerDown.lastX)*.0034;
         this.walkPitch=THREE.MathUtils.clamp(this.walkPitch-(event.clientY-this.pointerDown.lastY)*.003,-.95,.95);
@@ -398,6 +427,15 @@ export class SanctuaryScene {
       this.updateHover();
     });
     this.renderer.domElement.addEventListener('pointerup',event=>{
+      if(this.drag){
+        const drag=this.drag;this.drag=null;
+        if(this.mode==='room')this.controls.enabled=true;
+        if(drag.moved){this.room.rememberLayout();this.onProp?.(drag.prop,'move');}
+        else this.onProp?.(drag.prop,'click');
+        this.pointerDown=null;
+        if(this.renderer.domElement.hasPointerCapture(event.pointerId))this.renderer.domElement.releasePointerCapture(event.pointerId);
+        return;
+      }
       const moved=this.pointerDown?Math.hypot(event.clientX-this.pointerDown.x,event.clientY-this.pointerDown.y):999;
       if(moved<7&&performance.now()-(this.pointerDown?.time||0)<650) {
         this.setPointer(event);this.raycast();
@@ -405,7 +443,7 @@ export class SanctuaryScene {
       this.pointerDown=null;
       if(this.renderer.domElement.hasPointerCapture(event.pointerId))this.renderer.domElement.releasePointerCapture(event.pointerId);
     });
-    this.renderer.domElement.addEventListener('pointercancel',()=>{this.pointerDown=null;});
+    this.renderer.domElement.addEventListener('pointercancel',()=>{this.drag=null;this.pointerDown=null;if(this.mode==='room')this.controls.enabled=true;});
     this.renderer.domElement.addEventListener('pointerleave',()=>{if(this.mode!=='walk')this.onHover?.(null);this.hovered=null;});
     window.addEventListener('keydown',event=>{
       const inputFocused=['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
@@ -443,13 +481,48 @@ export class SanctuaryScene {
     return null;
   }
 
+  findPropHit() {
+    if(!this.room?.props?.length)return null;
+    if(this.mode!=='room'&&this.mode!=='walk')return null;
+    this.raycaster.setFromCamera(this.pointer,this.camera);
+    const hits=this.raycaster.intersectObjects(this.room.props.map((prop)=>prop.group),true);
+    if(!hits.length)return null;
+    let node=hits[0].object;
+    let propId=null;
+    while(node){
+      if(node.userData?.propId){propId=node.userData.propId;break;}
+      node=node.parent;
+    }
+    const prop=this.room.props.find((item)=>item.id===propId);
+    return prop?{prop}:null;
+  }
+
+  paintPropGlow(prop) {
+    if(!prop){this.propLight.intensity=0;this.hoveredProp=null;return;}
+    const box=new THREE.Box3().setFromObject(prop.group);
+    const center=box.getCenter(new THREE.Vector3());
+    this.propLight.position.copy(center);
+    this.propLight.intensity=this.reducedMotion?1.2:2.4;
+    this.hoveredProp=prop.id;
+  }
+
   updateHover() {
     if(this.mode==='landing'||this.mode==='tunnel'||this.paused||this.passing)return;
     const hit=this.findHit();
     const id=hit?.type==='hotspot'?hit.id:hit?.type==='milestone'?`milestone:${hit.id}`:hit?.type||null;
-    if(id===this.hovered)return;
-    this.hovered=id;this.renderer.domElement.style.cursor=id?'pointer':'grab';
-    this.onHover?.(id);
+    if(id){
+      if(id!==this.hovered){this.hovered=id;this.renderer.domElement.style.cursor='pointer';this.onHover?.(id);}
+      if(this.hoveredProp){this.paintPropGlow(null);this.onProp?.(null,'hover');}
+      return;
+    }
+    const propHit=this.findPropHit();
+    const propId=propHit?.prop?.id||null;
+    if(propId!==this.hoveredProp){
+      this.paintPropGlow(propHit?.prop||null);
+      this.onProp?.(propHit?.prop||null,'hover');
+    }
+    if(this.hovered){this.hovered=null;this.onHover?.(null);}
+    this.renderer.domElement.style.cursor=propId?'pointer':'grab';
   }
 
   raycast() {
@@ -458,7 +531,11 @@ export class SanctuaryScene {
     if(hit.type==='door'&&(this.mode==='room'||this.mode==='walk')){this.beginPassage('journey');return;}
     if(hit.type==='return'&&(this.mode==='journey'||this.mode==='journey-walk')){this.beginPassage('room');return;}
     if(hit.type==='milestone'){this.onMilestone?.(hit.id);return;}
-    if(this.mode==='room'&&hit.type==='hotspot'&&!this.paused){this.onHotspot?.(hit.id);this.focusHotspot(hit.id);}
+    if(this.mode==='room'&&hit.type==='hotspot'&&!this.paused){this.onHotspot?.(hit.id);this.focusHotspot(hit.id);return;}
+    if((this.mode==='room'||this.mode==='walk')&&!this.paused){
+      const propHit=this.findPropHit();
+      if(propHit)this.onProp?.(propHit.prop,'click');
+    }
   }
 
   resize() {

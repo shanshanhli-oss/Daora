@@ -9,6 +9,8 @@ Built with **Vite + vanilla JavaScript + Three.js**. The room, textures, calligr
 
 The public entry is a black-and-gold landing page. **开始起盘 / Begin Reading**, and the 命盘 zone, open `sanctuary.html`: the 起盘 flow, with a place cascade, 八字 and 紫微 charts, a tunnel, and the five-element room.
 
+v2 keeps that path and adds a starfield with gold dust, chart-driven furnishings (`src/furnishings.js`), objects you can hint and drag, a qin and a book of answers, the full 64-hexagram text, and a free 「AI 解读」 that stays on a local template unless the browser is given an endpoint. 风水 and 通灵 remain closed. GitHub Pages still serves the site under `/Daora/`.
+
 ## Run it — three options
 
 ### Option 1: development in Cursor (recommended)

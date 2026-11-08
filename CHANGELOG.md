@@ -1,3 +1,12 @@
+# DAORA v2 — a gold sea of stars
+
+- The landing and the night room sit in a deep starfield with gold nebulae and drifting gold dust. Motion eases off under `prefers-reduced-motion`. The tunnel remains a centred gold flight.
+- Natal furnishings follow `natal-furnishings-v1` in `src/furnishings.js`: resource stars and 文昌文曲 add books, 食神 / 天同 / 太阴 add a qin, wealth a bowl or toad, office a seal, the travelling horse a map or globe, wood and water a plant and a basin. The strongest weighted element still sets the palette.
+- Furniture can be hovered for a hint and dragged. It snaps to the floor or the shelves, and the place is kept in `daora-prop-layout-v1`. The qin plays a pentatonic phrase when sound is on. Books open a book of answers drawn from the I Ching.
+- All 64 hexagrams now carry the received 卦辞, 彖传, 象传 and six 爻辞, plus original Chinese and English lines. The six-line cast, the daily figure and the lot read from that book.
+- 「AI 解读」 is a local template unless the browser has an OpenAI-compatible endpoint. No key is shipped.
+- Breathing, the five elements, tea and the chart are free. 风水 and 通灵 stay marked as not yet open.
+
 # DAORA landing — black and gold
 
 - The public entry is `index.html`. **开始起盘** and the 命盘 zone open `sanctuary.html`, the 起盘 flow: place cascade, 八字 and 紫微, the tunnel, and the five-element room.

@@ -1,4 +1,6 @@
 /** A quiet, fully synthesised room ambience. No audio download, microphone or tracking. */
+import { pluckPhrase, strikeBowl } from './qin.js';
+
 export class AmbientAudio {
   constructor() {this.context=null;this.master=null;this.sources=[];this.enabled=false;this.timer=null;}
   async toggle() {
@@ -42,6 +44,16 @@ export class AmbientAudio {
     osc.type='sine';osc.frequency.setValueAtTime(523.25,now);osc.frequency.exponentialRampToValueAtTime(522.5,now+4);
     gain.gain.setValueAtTime(0,now);gain.gain.linearRampToValueAtTime(.045,now+.015);gain.gain.exponentialRampToValueAtTime(.0001,now+5);
     osc.connect(gain);gain.connect(this.master);osc.start(now);osc.stop(now+5.1);
+  }
+  playQin() {
+    if (!this.enabled || !this.context || !this.master) return false;
+    pluckPhrase(this.context, this.master);
+    return true;
+  }
+  playBowl() {
+    if (!this.enabled || !this.context || !this.master) return false;
+    strikeBowl(this.context, this.master);
+    return true;
   }
   async stop() {
     if(!this.context)return;

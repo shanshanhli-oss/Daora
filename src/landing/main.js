@@ -4,6 +4,7 @@ import { t } from './copy.js';
 import { mountHero } from './hero.js';
 import { mountZones } from './zones.js';
 import { mountDivine } from './divine.js';
+import { mountCosmos } from './cosmos.js';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (selector, parent = document) => parent.querySelector(selector);
@@ -16,6 +17,7 @@ try {
 } catch { /* ignore */ }
 
 const divine = mountDivine($('#divine-root'), { reduced });
+mountCosmos($('#cosmos'), { reduced });
 let zones = null;
 let hero = null;
 
